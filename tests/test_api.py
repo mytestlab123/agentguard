@@ -10,6 +10,8 @@ from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 from agentguard.api import DemoActionError, DemoController, make_handler
+from agentguard.contracts import Action, Scope, WafRuleState
+from agentguard.waf_reader import WafReadError
 
 
 NOW = datetime(2026, 8, 26, 12, 0, tzinfo=timezone.utc)
@@ -58,6 +60,54 @@ class DemoControllerTests(unittest.TestCase):
     def test_approve_without_review_is_rejected(self) -> None:
         with self.assertRaisesRegex(DemoActionError, "NO_APPROVABLE_PROPOSAL"):
             self.controller.approve_once()
+
+
+class LiveReadOnlyControllerTests(unittest.TestCase):
+    class Reader:
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def read(self) -> WafRuleState:
+            self.calls += 1
+            return WafRuleState(
+                target_alias="LAB_WAF_01",
+                scope=Scope.REGIONAL,
+                region_alias="REGION_01",
+                rule_name="LAB_AdminPathProtection",
+                action=Action.COUNT,
+                lock_token="PRIVATE_LOCK_TOKEN",
+                revision=1,
+            )
+
+    def setUp(self) -> None:
+        self.reader = self.Reader()
+        self.controller = DemoController(clock=lambda: NOW, live_reader=self.reader)
+
+    def test_live_review_produces_same_proposal_without_mutation(self) -> None:
+        reviewed = self.controller.review()
+
+        self.assertEqual(self.reader.calls, 1)
+        self.assertEqual(reviewed["environmentLabel"], "LIVE AWS - READ ONLY")
+        self.assertTrue(reviewed["liveReadOnly"])
+        self.assertEqual(reviewed["decision"], "APPROVAL_REQUIRED")
+        self.assertEqual(reviewed["beforeAction"], "COUNT")
+        self.assertEqual(reviewed["requestedAction"], "BLOCK")
+        self.assertEqual(reviewed["actualAction"], "COUNT")
+        self.assertFalse(reviewed["mutationPerformed"])
+        self.assertEqual(
+            [tool["name"] for tool in reviewed["tools"]],
+            ["get_waf_config", "inspect_rule_action", "policy_decision"],
+        )
+
+    def test_live_approval_is_disabled_and_bypass_is_denied(self) -> None:
+        self.controller.review()
+        with self.assertRaisesRegex(DemoActionError, "^LIVE_READ_ONLY$"):
+            self.controller.approve_once()
+
+        bypassed = self.controller.bypass()
+        self.assertEqual(bypassed["reason"], "HUMAN_APPROVAL_REQUIRED")
+        self.assertFalse(bypassed["mutationPerformed"])
+        self.assertFalse(bypassed["verified"])
 
 
 class LocalHttpContractTests(unittest.TestCase):
@@ -121,3 +171,33 @@ class LocalHttpContractTests(unittest.TestCase):
         self.assertEqual(context.exception.code, HTTPStatus.FORBIDDEN)
         self.assertEqual(json.load(context.exception), {"error": "HUMAN_UI_INTENT_REQUIRED"})
         self.assertEqual(self.controller.state()["actualAction"], "COUNT")
+
+
+class LiveHttpErrorContractTests(unittest.TestCase):
+    class FailingReader:
+        def read(self) -> WafRuleState:
+            raise WafReadError("WAF_READ_FAILED")
+
+    def test_raw_aws_failure_returns_only_stable_reason(self) -> None:
+        controller = DemoController(clock=lambda: NOW, live_reader=self.FailingReader())
+        server = ThreadingHTTPServer(("localhost", 0), make_handler(controller))
+        thread = Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        request = Request(
+            f"http://localhost:{server.server_port}/api/review",
+            data=b"{}",
+            method="POST",
+            headers={
+                "Content-Type": "application/json",
+                "X-AgentGuard-Intent": "human-ui-v1",
+            },
+        )
+        try:
+            with self.assertRaises(HTTPError) as context:
+                urlopen(request, timeout=2)
+            self.assertEqual(context.exception.code, HTTPStatus.BAD_GATEWAY)
+            self.assertEqual(json.load(context.exception), {"error": "WAF_READ_FAILED"})
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join(timeout=2)

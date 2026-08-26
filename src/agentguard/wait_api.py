@@ -28,7 +28,10 @@ def wait_for_api(port: int, attempts: int) -> None:
         try:
             with urlopen(url, timeout=1) as response:
                 payload = json.load(response)
-            if payload == {"status": "ok", "mode": "local-synthetic"}:
+            if (
+                payload.get("status") == "ok"
+                and payload.get("mode") in {"local-synthetic", "live-aws-read-only"}
+            ):
                 return
         except (OSError, URLError, ValueError, json.JSONDecodeError):
             pass

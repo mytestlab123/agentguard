@@ -30,6 +30,12 @@ def build_synthetic_lane(now: datetime) -> SyntheticLane:
         lock_token="LOCK_01",
         revision=1,
     )
+    return build_lane_from_state(state, now)
+
+
+def build_lane_from_state(state: WafRuleState, now: datetime) -> SyntheticLane:
+    """Build the existing policy flow around one already-sanitized state."""
+
     policy = AgentGuardPolicy(
         AllowedMutation(
             target_alias=state.target_alias,

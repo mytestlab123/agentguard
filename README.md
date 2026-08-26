@@ -75,6 +75,9 @@ BYPASS APPROVAL REQUEST -> DENY
 ## Local proof
 
 ```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
 cd frontend
 npm ci
 cd ..
@@ -86,6 +89,30 @@ Run the local browser demo with:
 ```bash
 ./scripts/run-local.sh
 ```
+
+## Live AWS read-only proof
+
+Set these real values only in the server process environment or another ignored
+local file; never commit them:
+
+- `AGENTGUARD_AWS_REGION`
+- `AGENTGUARD_WAF_SCOPE`
+- `AGENTGUARD_WAF_NAME`
+- `AGENTGUARD_WAF_ID`
+- `AGENTGUARD_WAF_RULE_NAME`
+- optional `AGENTGUARD_AWS_PROFILE`
+
+Then run the repo-owned alias-only proof and browser mode:
+
+```bash
+export AGENTGUARD_MODE=live-readonly
+./scripts/prove-live-read.sh
+./scripts/run-local.sh
+```
+
+The live reader calls only the exact configured `GetWebACL` target. Missing,
+ambiguous, mismatched, or non-COUNT evidence fails closed with a stable code.
+The browser shows `LIVE AWS - READ ONLY` and disables Approve Once.
 
 See:
 

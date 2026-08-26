@@ -17,6 +17,11 @@ proposal binding, approval expiry/replay, runtime validation, and drift denial.
 direct approval replay is denied, rejection/bypass do not mutate, fixed HTTP
 routes work, unexpected input fails closed, and human-UI intent is required.
 
+`test_waf_reader.py` proves that a mocked `GetWebACL` response maps only to
+aliases, exact target/rule selection is enforced, missing/ambiguous/non-COUNT
+states fail closed, SDK errors are sanitized, runtime configuration is exact,
+and the live reader has no mutation surface.
+
 The frontend API-client test protects the fixed action-to-route allowlist and
 generic browser error boundary. Authorization transition tests live in Python
 only so there is one policy authority.

@@ -14,6 +14,7 @@ from .contracts import (
 )
 from .guard import AgentGuardPolicy, GuardedWafMutationService
 from .synthetic_waf import SyntheticWafStore
+from .waf_reader import AwsWafConfig, AwsWafReader, WafReadError, WafReader
 
 __all__ = [
     "Action",
@@ -29,5 +30,9 @@ __all__ = [
     "Scope",
     "SyntheticWafStore",
     "WafChangeProposal",
+    "WafReadError",
+    "WafReader",
     "WafRuleState",
+    "AwsWafConfig",
+    "AwsWafReader",
 ]

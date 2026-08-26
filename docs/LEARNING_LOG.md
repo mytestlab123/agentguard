@@ -90,3 +90,20 @@
   cloud resource, or billable action was used.
 - Next: final public-safety diff review, then a focused commit only with owner
   approval.
+
+## 2026-08-26 - Phase 2 read-only WAF boundary
+
+- Objective: replace only the synthetic read evidence with one exact real AWS
+  WAF read while preserving the existing deterministic proposal boundary.
+- Built: runtime-only exact target configuration, a `GetWebACL`-only adapter,
+  alias-only rule state, stable sanitized errors, live read-only API/UI mode,
+  disabled live approval, mocked regression tests, and a repo-owned live proof.
+- Safety evidence: the reader has no mutation method; browser actions contain
+  no resource selector; synthetic mode remains the test default.
+- Local validation: 26 Python tests, three frontend tests, Bash parser checks,
+  and the Vite production build pass without AWS access.
+- AWS discovery: the approved account currently has no Regional WebACL in the
+  selected region and no CloudFront WebACL, so no live target was read and no
+  resource was created.
+- Decision: stop at the resource-creation approval gate. A disposable WebACL
+  requires separate exact approval, tags, TTL, and cleanup ownership.

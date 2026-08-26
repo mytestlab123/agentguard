@@ -1,4 +1,4 @@
-"""Local-only HTTP boundary for the synthetic AgentGuard browser demo."""
+"""Local HTTP boundary for synthetic and live read-only AgentGuard modes."""
 
 from __future__ import annotations
 
@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
+import os
 from pathlib import Path
 from threading import RLock
 from typing import Callable
@@ -15,7 +16,8 @@ from urllib.parse import urlsplit
 
 from .approval import ApprovalToken
 from .contracts import Decision, MutationResult, PolicyDecision, Reason
-from .fixtures import SyntheticLane, build_synthetic_lane
+from .fixtures import SyntheticLane, build_lane_from_state, build_synthetic_lane
+from .waf_reader import WafReadError, WafReader, build_aws_waf_reader_from_env
 
 
 Clock = Callable[[], datetime]
@@ -47,13 +49,23 @@ def _timeline(**overrides: str) -> dict[str, str]:
 class DemoController:
     """Thread-safe presentation controller backed by the real policy core."""
 
-    def __init__(self, clock: Clock | None = None) -> None:
+    def __init__(
+        self,
+        clock: Clock | None = None,
+        live_reader: WafReader | None = None,
+    ) -> None:
         self._clock = clock or (lambda: datetime.now(timezone.utc))
+        self._live_reader = live_reader
+        self._live_read_only = live_reader is not None
         self._lock = RLock()
         self._lane: SyntheticLane
         self._approval: ApprovalToken | None
         self._state: dict[str, object]
         self._reset_locked()
+
+    @property
+    def api_mode(self) -> str:
+        return "live-aws-read-only" if self._live_read_only else "local-synthetic"
 
     def state(self) -> dict[str, object]:
         with self._lock:
@@ -66,17 +78,23 @@ class DemoController:
 
     def review(self) -> dict[str, object]:
         with self._lock:
-            self._lane = build_synthetic_lane(self._clock())
+            now = self._clock()
+            if self._live_reader is None:
+                self._lane = build_synthetic_lane(now)
+            else:
+                self._lane = build_lane_from_state(self._live_reader.read(), now)
             self._approval = None
             decision = self._lane.policy.decide_proposal(
                 self._lane.proposal,
-                now=self._clock(),
+                now=now,
             )
             self._state = self._proposal_state(decision)
             return deepcopy(self._state)
 
     def approve_once(self) -> dict[str, object]:
         with self._lock:
+            if self._live_read_only:
+                raise DemoActionError("LIVE_READ_ONLY")
             mode = str(self._state["mode"])
             if mode not in {"proposal", "approved"}:
                 raise DemoActionError("NO_APPROVABLE_PROPOSAL")
@@ -121,6 +139,7 @@ class DemoController:
         read = self._lane.policy.decide_read()
         observed = self._lane.store.read()
         self._state = {
+            **self._environment_fields(),
             "mode": "idle",
             "decision": read.decision.value,
             "reason": read.reason.value,
@@ -128,9 +147,9 @@ class DemoController:
             "target": observed.target_alias,
             "rule": observed.rule_name,
             "proposal": "NONE",
-            "beforeAction": observed.action.value,
+            "beforeAction": "UNKNOWN" if self._live_read_only else observed.action.value,
             "requestedAction": "NONE",
-            "actualAction": observed.action.value,
+            "actualAction": "UNKNOWN" if self._live_read_only else observed.action.value,
             "mutationPerformed": False,
             "verified": False,
             "audit": "NOT_STARTED",
@@ -139,7 +158,10 @@ class DemoController:
                 {
                     "role": "agent",
                     "text": (
-                        "Ready to review the synthetic WebACL LAB_WAF_01. "
+                        "Ready to read the configured AWS WebACL as LAB_WAF_01. "
+                        "AWS writes are unavailable."
+                        if self._live_read_only
+                        else "Ready to review the synthetic WebACL LAB_WAF_01. "
                         "Reads are allowed; changes are guarded."
                     ),
                 }
@@ -149,7 +171,25 @@ class DemoController:
 
     def _proposal_state(self, decision: PolicyDecision) -> dict[str, object]:
         observed = self._lane.store.read()
+        tools = (
+            [
+                {"name": "get_waf_config", "status": "complete", "detail": "LAB_WAF_01"},
+                {"name": "inspect_rule_action", "status": "complete", "detail": "COUNT"},
+                {
+                    "name": "policy_decision",
+                    "status": "complete",
+                    "detail": "APPROVAL REQUIRED",
+                },
+            ]
+            if self._live_read_only
+            else [
+                {"name": "get_waf_config", "status": "complete", "detail": "Read LAB_WAF_01"},
+                {"name": "evaluate_count_rules", "status": "complete", "detail": "Found one COUNT rule"},
+                {"name": "create_guarded_proposal", "status": "complete", "detail": "Bound PROPOSAL_01"},
+            ]
+        )
         return {
+            **self._environment_fields(),
             "mode": "proposal",
             "decision": decision.decision.value,
             "reason": decision.reason.value,
@@ -163,17 +203,16 @@ class DemoController:
             "mutationPerformed": False,
             "verified": False,
             "audit": "PENDING",
-            "tools": [
-                {"name": "get_waf_config", "status": "complete", "detail": "Read LAB_WAF_01"},
-                {"name": "evaluate_count_rules", "status": "complete", "detail": "Found one COUNT rule"},
-                {"name": "create_guarded_proposal", "status": "complete", "detail": "Bound PROPOSAL_01"},
-            ],
+            "tools": tools,
             "messages": [
                 {"role": "user", "text": "Review my firewall configuration."},
                 {
                     "role": "agent",
                     "text": (
-                        "LAB_AdminPathProtection is in COUNT mode. I propose exactly "
+                        "Real AWS evidence confirms LAB_AdminPathProtection is in COUNT "
+                        "mode. I propose exactly COUNT to BLOCK. AWS mutation is disabled."
+                        if self._live_read_only
+                        else "LAB_AdminPathProtection is in COUNT mode. I propose exactly "
                         "COUNT to BLOCK. No change has occurred."
                     ),
                 },
@@ -190,6 +229,7 @@ class DemoController:
     def _execution_state(self, result: MutationResult) -> dict[str, object]:
         replay_denied = result.reason is Reason.APPROVAL_REUSED
         return {
+            **self._environment_fields(),
             "mode": "approved" if result.decision is Decision.ALLOW else "denied",
             "decision": result.decision.value,
             "reason": result.reason.value,
@@ -246,6 +286,7 @@ class DemoController:
     def _rejected_state(self, decision: PolicyDecision) -> dict[str, object]:
         observed = self._lane.store.read()
         return {
+            **self._environment_fields(),
             "mode": "rejected",
             "decision": decision.decision.value,
             "reason": decision.reason.value,
@@ -264,7 +305,14 @@ class DemoController:
             ],
             "messages": [
                 {"role": "user", "text": "Reject."},
-                {"role": "agent", "text": "Request rejected. The synthetic rule remains in COUNT mode."},
+                {
+                    "role": "agent",
+                    "text": (
+                        "Request rejected. AWS mutation is disabled; the observed rule remains COUNT."
+                        if self._live_read_only
+                        else "Request rejected. The synthetic rule remains in COUNT mode."
+                    ),
+                },
             ],
             "steps": _timeline(
                 request="done",
@@ -280,6 +328,7 @@ class DemoController:
 
     def _bypass_state(self, result: MutationResult) -> dict[str, object]:
         return {
+            **self._environment_fields(),
             "mode": "bypass",
             "decision": result.decision.value,
             "reason": result.reason.value,
@@ -314,6 +363,25 @@ class DemoController:
             ),
         }
 
+    def _environment_fields(self) -> dict[str, object]:
+        if self._live_read_only:
+            return {
+                "environment": "live-readonly",
+                "environmentLabel": "LIVE AWS - READ ONLY",
+                "environmentDescription": (
+                    "Real AWS WAF evidence is sanitized server-side. AWS mutation is disabled."
+                ),
+                "liveReadOnly": True,
+            }
+        return {
+            "environment": "synthetic",
+            "environmentLabel": "LOCAL SYNTHETIC DEMO",
+            "environmentDescription": (
+                "Python policy authority connected. No model or AWS connection; all results are synthetic."
+            ),
+            "liveReadOnly": False,
+        }
+
 
 def make_handler(controller: DemoController) -> type[BaseHTTPRequestHandler]:
     class AgentGuardHandler(BaseHTTPRequestHandler):
@@ -322,7 +390,7 @@ def make_handler(controller: DemoController) -> type[BaseHTTPRequestHandler]:
         def do_GET(self) -> None:
             path = urlsplit(self.path).path
             if path == "/api/health":
-                self._send_json(HTTPStatus.OK, {"status": "ok", "mode": "local-synthetic"})
+                self._send_json(HTTPStatus.OK, {"status": "ok", "mode": controller.api_mode})
                 return
             if path == "/api/state":
                 self._send_json(HTTPStatus.OK, controller.state())
@@ -346,6 +414,9 @@ def make_handler(controller: DemoController) -> type[BaseHTTPRequestHandler]:
                 return
             try:
                 state = action()
+            except WafReadError as error:
+                self._send_json(HTTPStatus.BAD_GATEWAY, {"error": error.reason})
+                return
             except DemoActionError as error:
                 self._send_json(HTTPStatus.CONFLICT, {"error": error.reason})
                 return
@@ -403,16 +474,29 @@ def make_handler(controller: DemoController) -> type[BaseHTTPRequestHandler]:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Run the local synthetic AgentGuard API")
+    parser = argparse.ArgumentParser(description="Run the local AgentGuard API")
     parser.add_argument("--port", type=int, default=0)
     parser.add_argument("--ready-file", type=Path)
+    parser.add_argument(
+        "--mode",
+        choices=("synthetic", "live-readonly"),
+        default=os.environ.get("AGENTGUARD_MODE", "synthetic"),
+    )
     args = parser.parse_args()
     if args.port != 0 and not 1024 <= args.port <= 65535:
         parser.error("port must be zero or between 1024 and 65535")
     if args.ready_file is not None and not args.ready_file.is_file():
         parser.error("ready file must already exist")
 
-    controller = DemoController()
+    try:
+        live_reader = (
+            build_aws_waf_reader_from_env()
+            if args.mode == "live-readonly"
+            else None
+        )
+    except WafReadError as error:
+        parser.error(error.reason)
+    controller = DemoController(live_reader=live_reader)
     server = ThreadingHTTPServer(("localhost", args.port), make_handler(controller))
     actual_port = server.server_port
     if args.ready_file is not None:
