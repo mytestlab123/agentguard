@@ -54,8 +54,13 @@ function DecisionPanel({ state, onAction, busy }) {
 
       {state.mode === 'proposal' && (
         <div className="approval-actions">
-          <button disabled={busy} className="approve" onClick={() => onAction('APPROVE_ONCE')}>
-            Approve Once
+          <button
+            disabled={busy || state.liveReadOnly}
+            className="approve"
+            onClick={() => onAction('APPROVE_ONCE')}
+            title={state.liveReadOnly ? 'AWS mutation is disabled in read-only mode' : ''}
+          >
+            {state.liveReadOnly ? 'Approve Once (disabled)' : 'Approve Once'}
           </button>
           <button disabled={busy} className="reject" onClick={() => onAction('REJECT')}>
             Reject
@@ -131,11 +136,11 @@ export default function App() {
             <h1>AgentGuard</h1>
             <p>Trust boundary for sensitive agent actions</p>
           </div>
-          <div className="environment-pill">LOCAL SYNTHETIC DEMO</div>
+          <div className="environment-pill">{state.environmentLabel}</div>
         </header>
 
         <div className="demo-banner">
-          Python policy authority connected. No model or AWS connection; all results are synthetic.
+          {state.environmentDescription}
         </div>
 
         {error && <div className="error-banner" role="alert">{error}</div>}

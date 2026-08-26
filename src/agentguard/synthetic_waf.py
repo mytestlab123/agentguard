@@ -12,7 +12,7 @@ class ConfigurationDriftError(RuntimeError):
 
 
 class SyntheticWafStore:
-    """A narrow stand-in for one future GetWebACL/UpdateWebACL adapter."""
+    """A narrow stand-in for one future guarded AWS mutation adapter."""
 
     def __init__(self, initial: WafRuleState) -> None:
         self._state = initial

@@ -90,3 +90,27 @@
   cloud resource, or billable action was used.
 - Next: final public-safety diff review, then a focused commit only with owner
   approval.
+
+## 2026-08-26 - Phase 2 read-only WAF boundary
+
+- Objective: replace only the synthetic read evidence with one exact real AWS
+  WAF read while preserving the existing deterministic proposal boundary.
+- Built: runtime-only exact target configuration, a `GetWebACL`-only adapter,
+  alias-only rule state, stable sanitized errors, live read-only API/UI mode,
+  disabled live approval, mocked regression tests, and a repo-owned live proof.
+- Safety evidence: the reader has no mutation method; browser actions contain
+  no resource selector; synthetic mode remains the test default.
+- Local validation: 26 Python tests, three frontend tests, Bash parser checks,
+  and the Vite production build pass without AWS access.
+- Live evidence: after exact approval, one tagged, TTL-bound, unassociated
+  disposable WebACL with one COUNT rule was read through the repo-owned proof.
+  Output contained only `LAB_WAF_01`, `LAB_AdminPathProtection`, COUNT, BLOCK,
+  the deterministic decision, and no raw AWS identifiers.
+- Browser evidence: live review showed `LIVE AWS - READ ONLY`, APPROVAL REQUIRED,
+  disabled approval, and mutation NO; bypass showed DENY,
+  HUMAN_APPROVAL_REQUIRED, and mutation NO.
+- Cleanup: the exact disposable WebACL was deleted after capture; Regional WAF
+  inventory returned to zero and exact reread returned not found. No AWS
+  resource or write authority remains.
+- Limits: Phase 3 mutation, LockToken execution, write IAM, model integration,
+  deployment, and multi-target support remain unapproved.

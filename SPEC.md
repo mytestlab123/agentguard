@@ -2,14 +2,14 @@
 
 ## Active approved scope
 
-GitHub issue #4 defines the later AgentGuard v1 scope and supersedes the Phase
-0 wait gate for this bounded work. The first slice is synthetic and local only:
-an exact typed WAF COUNT-to-BLOCK proposal, deterministic policy, one-time
-human approval, drift checks, synthetic execution, verification, and audit.
+GitHub issue #6 defines Phase 2: read exactly one runtime-configured AWS WAF
+WebACL, sanitize one COUNT rule to public aliases, and feed it into the existing
+typed COUNT-to-BLOCK proposal and deterministic approval policy.
 
-The model, browser integration, AWS adapter, deployment, and any real WAF
-mutation remain outside this first slice. Cloud use still requires separate
-approval for the exact experiment.
+The browser cannot select AWS resources. Real names, IDs, lock tokens, profile
+details, and raw SDK errors remain server-side. Synthetic mode stays available
+for development and regression tests. Phase 2 has no AWS mutation capability;
+the live Approve Once control is disabled.
 
 The original RAG specification below is retained as repository history.
 
@@ -55,9 +55,11 @@ exceptions, logs, memory, and evaluation reports.
 
 ## No-go gates
 
-- No real data, identifiers, secrets, or production configuration.
-- No paid API or cloud usage without explicit approval.
+- No real identifiers, secrets, or production configuration in committed or
+  browser-visible content.
+- No AWS resource creation without separate approval for the exact target.
 - No cloud mutation without an approved, narrow experiment and verified cleanup.
+- No model, AgentCore, Cognito, deployment, or write IAM in Phase 2.
 - No external publication without a public-safety review.
 
 ## Definition of done for a learning change

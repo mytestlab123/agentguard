@@ -1,4 +1,34 @@
-# Architecture: Planned Trust Boundaries
+# Architecture: Trust Boundaries
+
+## Active Phase 2 read path
+
+```text
+Fixed browser review action
+          |
+          v
+Local Python API
+          |
+          v
+Server-side exact target allowlist
+          |
+          v
+AWS WAF GetWebACL only
+          |
+          v
+Alias-only LAB_WAF_01 / LAB_AdminPathProtection / COUNT
+          |
+          v
+Typed COUNT -> BLOCK proposal
+          |
+          v
+Deterministic policy -> APPROVAL REQUIRED
+```
+
+Real resource identifiers and SDK errors stop at the server-side reader. Live
+mode exposes no mutation method, and the browser disables Approve Once. The
+existing synthetic executor remains isolated to local development and tests.
+
+## Historical RAG design
 
 This file records the earlier RAG Phase 0 design. The active AgentGuard v1
 design is in [AGENTGUARD_V1_UX.md](AGENTGUARD_V1_UX.md); the executable local
@@ -31,5 +61,5 @@ Grounded response or deterministic check
   additional poisoning controls.
 - Security failures become retained synthetic regression cases.
 
-No component in this Phase 0 repository is implemented or connected to a
-model, vector database, AWS, or another external service.
+The RAG design remains future historical context and is not connected to a
+model or vector database.
