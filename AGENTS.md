@@ -12,11 +12,13 @@ The core rule is:
 
 ## Current POC scope
 
-GitHub Issue #8 is the approved local browser E2E scope:
+GitHub Issue #11 is the approved sanitized offline proof scope:
 
-- start the existing synthetic API and frontend on explicit free loopback ports;
-- assert the proposal and approval-bypass states through documented API routes;
-- capture two browser screenshots outside Git;
+- keep the existing synthetic API and frontend on explicit free loopback ports;
+- assert proposal, exact approval, and approval-bypass states through documented
+  API routes;
+- generate temporary browser evidence outside Git;
+- retain only the three approved synthetic snapshots under `docs/demo-proof/`;
 - clean up only the processes and temporary profile created by the runner.
 
 This is a local POC. It must not call or mutate AWS.
@@ -38,7 +40,9 @@ This is a local POC. It must not call or mutate AWS.
 ## Hard stops
 
 - Do not stop unrelated local listeners; use another verified free port.
-- Do not commit screenshots, runtime logs, browser profiles, or E2E evidence.
+- Do not commit raw screenshots, runtime logs, browser profiles, or E2E evidence.
+  The only screenshot exception is visually inspected, synthetic, alias-only
+  proof under `docs/demo-proof/` approved by an exact Issue.
 - Do not add `wafv2:UpdateWebACL` or any other AWS mutation call unless a later
   exact mutation experiment is separately approved.
 - Do not require mutation IAM permissions.
@@ -55,8 +59,11 @@ Retain the existing policy and read-only AWS tests. For the browser runner,
 prove:
 
 1. proposal JSON is `APPROVAL_REQUIRED`, `COUNT -> BLOCK`, mutation false;
-2. bypass JSON is `DENY / HUMAN_APPROVAL_REQUIRED`, mutation false;
-3. two distinct nonempty screenshots are produced outside Git;
-4. owned listeners and the temporary browser profile are cleaned up.
+2. approved JSON is `ALLOW / APPROVAL_VALID`, actual BLOCK, mutation and
+   verification true;
+3. bypass JSON is `DENY / HUMAN_APPROVAL_REQUIRED`, mutation false;
+4. three distinct nonempty screenshots are produced outside Git;
+5. approved synthetic snapshots contain only aliases before they enter Git;
+6. owned listeners and the temporary browser profile are cleaned up.
 
 Before every public push, perform a public-safety diff review.

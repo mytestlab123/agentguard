@@ -21,6 +21,7 @@ The local visual proof and Phase 2 real AWS read-only proof are complete:
 - exact runtime-configured AWS WAF read through `GetWebACL`;
 - alias-only live evidence and stable sanitized failures;
 - visible `LIVE AWS - READ ONLY` mode with live approval disabled.
+- repo-owned offline proof of proposal, exact approval, and bypass denial.
 
 The implementation keeps synthetic mode for tests and supports one exact live
 read target. It has no AWS mutation adapter or write IAM requirement.
@@ -105,10 +106,21 @@ Run the agent-owned synthetic browser proof with:
 ```
 
 It starts the API and frontend on separate free loopback ports, asserts the
-proposal and approval-bypass JSON, captures two screenshots with installed
-Chrome, and cleans up its own processes. Evidence is written outside Git under
-`~/.AGENTS-temp/agentguard/browser-e2e/` by default. This is intentionally a
-small POC runner, not an enterprise browser-testing framework.
+proposal, exact approval, and approval-bypass JSON, captures three screenshots
+with installed Chrome, and cleans up its own processes. Temporary evidence is
+written outside Git under `~/.AGENTS-temp/agentguard/browser-e2e/` by default.
+This is intentionally a small POC runner, not an enterprise browser-testing
+framework.
+
+## Offline demo proof
+
+If the local application cannot be started, use the accepted sanitized proof:
+
+- [`docs/demo-proof/output.md`](docs/demo-proof/output.md)
+
+It shows `APPROVAL REQUIRED`, `ALLOW / APPROVAL_VALID`, and bypass `DENY` with
+relative screenshots that render directly on GitHub. The screenshots use only
+synthetic aliases and do not prove a real AWS mutation.
 
 ## Live AWS read-only proof
 
