@@ -107,12 +107,14 @@ Run the agent-owned synthetic browser proof with:
 ./scripts/browser-e2e.sh
 ```
 
-It starts the API and frontend on separate free loopback ports, asserts the
-proposal, exact approval, and approval-bypass JSON, captures three screenshots
-with installed Chrome, and cleans up its own processes. Temporary evidence is
-written outside Git under `~/.AGENTS-temp/agentguard/browser-e2e/` by default.
-This is intentionally a small POC runner, not an enterprise browser-testing
-framework.
+It starts the API and frontend on separate free loopback ports, then uses the
+pinned Playwright Core development dependency with installed Chrome. The
+browser clicks Review Firewall, Approve Once, Reset, and Try Approval Bypass;
+asserts the matching API and rendered DOM states; captures three screenshots;
+records browser errors and external requests; and cleans up its browser,
+services, ports, and temporary files. Evidence is written outside Git under
+`~/.AGENTS-temp/agentguard/browser-e2e/` by default. This remains a small POC
+runner, not an enterprise browser-testing framework.
 
 ## Offline demo proof
 

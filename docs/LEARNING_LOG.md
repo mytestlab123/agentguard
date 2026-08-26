@@ -128,6 +128,23 @@
 - Limits: no API/GUI integration, model, AWS mutation, IAM, RAG, dependency, or
   generalized target selection.
 
+## 2026-08-27 - Interactive Playwright demo proof
+
+- Objective: replace API-seeded rendering screenshots with a repeatable browser
+  journey that uses the same controls as the manager demo.
+- Built: one pinned Playwright Core development dependency, a repo-owned browser
+  script, four real UI actions, matching API and DOM assertions, browser-error
+  capture, three fixed-size screenshots, and exact cleanup evidence.
+- Boundary lesson: Windows Node completed reliably when the repo-pinned
+  Playwright package and runner were staged together in one unique Windows
+  temporary directory; importing the package across the UNC boundary left the
+  WSL interop proxy waiting after the Windows process had exited.
+- Evidence: proposal, valid approval, reset, and bypass actions pass with zero
+  console, page, request, HTTP, or external-network errors; all three 1920 x
+  1080 screenshots were visually inspected and contain aliases only.
+- Safety: synthetic mode and loopback listeners only; no AWS call, model,
+  credential, real identifier, or mutation authority was introduced.
+
 ## 2026-08-26 - Phase 2 read-only WAF boundary
 
 - Objective: replace only the synthetic read evidence with one exact real AWS

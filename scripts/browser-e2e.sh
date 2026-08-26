@@ -129,43 +129,23 @@ find_chrome() {
   printf '%s\n' "$candidate"
 }
 
-capture_screenshot() {
-  local name=$1
-  local output="$run_dir/$name.png"
-  local browser_output=$output
-  local browser_output_arg=$output
-  local browser_profile_arg="$browser_work_dir/profile"
-
+find_browser_node() {
+  local candidate
   if [[ "$chrome_bin" == *.exe ]]; then
-    browser_output="$browser_work_dir/$name.png"
-    browser_output_arg="$(wslpath -w "$browser_output")"
-    browser_profile_arg="$(wslpath -w "$browser_work_dir/profile")"
+    candidate="${AGENTGUARD_WINDOWS_NODE:-/mnt/c/Program Files/nodejs/node.exe}"
+    [[ -x "$candidate" ]] || fail "Windows Node not found; set AGENTGUARD_WINDOWS_NODE"
+    printf '%s\n' "$candidate"
+    return 0
   fi
-
-  "$chrome_bin" \
-    --headless \
-    --disable-gpu \
-    --hide-scrollbars \
-    --no-first-run \
-    "--user-data-dir=$browser_profile_arg" \
-    --window-size=1920,1080 \
-    --virtual-time-budget=3000 \
-    "--screenshot=$browser_output_arg" \
-    "$app_url" >>"$run_dir/chrome.log" 2>&1
-
-  [[ -s "$browser_output" ]] || fail "browser did not create $name.png"
-  if [[ "$browser_output" != "$output" ]]; then
-    install -m 600 "$browser_output" "$output"
-  fi
+  command -v node >/dev/null 2>&1 || fail "missing required command: node"
+  command -v node
 }
 
 require_command curl
 require_command jq
 require_command ss
 require_command setsid
-require_command sha256sum
 require_command realpath
-require_command awk
 require_command install
 
 evidence_root="$(realpath -m "$evidence_root")"
@@ -182,6 +162,12 @@ validate_port "$frontend_port"
 [[ "$api_port" != "$frontend_port" ]] || fail "API and frontend ports must differ"
 
 chrome_bin="$(find_chrome)"
+browser_node="$(find_browser_node)"
+browser_script="$repo_root/scripts/browser-e2e.mjs"
+playwright_entry="$repo_root/frontend/node_modules/playwright-core/index.mjs"
+[[ -f "$browser_script" ]] || fail "browser test script is missing"
+[[ -f "$playwright_entry" ]] || fail "playwright-core is missing; run npm ci in frontend"
+
 if [[ "$chrome_bin" == *.exe ]]; then
   require_command powershell.exe
   require_command wslpath
@@ -189,10 +175,19 @@ if [[ "$chrome_bin" == *.exe ]]; then
   [[ -n "$windows_temp" ]] || fail "Windows temporary path unavailable"
   windows_temp_wsl="$(wslpath -u "$windows_temp")"
   browser_work_dir="$windows_temp_wsl/agentguard-e2e-$$"
-  mkdir -p "$browser_work_dir/profile"
+  mkdir -p "$browser_work_dir/node_modules"
+  install -m 600 "$browser_script" "$browser_work_dir/browser-e2e.mjs"
+  cp -R "$repo_root/frontend/node_modules/playwright-core" \
+    "$browser_work_dir/node_modules/playwright-core"
+  browser_script_arg="$(wslpath -w "$browser_work_dir/browser-e2e.mjs")"
+  chrome_arg="$(wslpath -w "$chrome_bin")"
+  evidence_arg="$(wslpath -w "$run_dir")"
+  playwright_arg="$(wslpath -w "$browser_work_dir/node_modules/playwright-core/index.mjs")"
 else
-  browser_work_dir="$(mktemp -d "$run_dir/browser.XXXXXX")"
-  mkdir -p "$browser_work_dir/profile"
+  browser_script_arg="$browser_script"
+  chrome_arg="$chrome_bin"
+  evidence_arg="$run_dir"
+  playwright_arg="$playwright_entry"
 fi
 
 app_url="http://localhost:$frontend_port"
@@ -211,65 +206,28 @@ service_pgid=$!
 wait_for_url "$api_url/api/health"
 wait_for_url "$app_url/"
 
-curl --fail --silent --show-error \
-  -X POST \
-  -H 'Content-Type: application/json' \
-  -H 'X-AgentGuard-Intent: human-ui-v1' \
-  --data '{}' \
-  "$app_url/api/review" >"$run_dir/proposal.json"
+"$browser_node" \
+  "$browser_script_arg" \
+  "$app_url" \
+  "$chrome_arg" \
+  "$evidence_arg" \
+  "$playwright_arg" >"$run_dir/playwright.log" 2>&1
 
 jq -e '
-  .environment == "synthetic" and
-  .decision == "APPROVAL_REQUIRED" and
-  .reason == "HUMAN_APPROVAL_REQUIRED" and
-  .beforeAction == "COUNT" and
-  .requestedAction == "BLOCK" and
-  .actualAction == "COUNT" and
-  .mutationPerformed == false
-' "$run_dir/proposal.json" >/dev/null
-capture_screenshot proposal
+  (.result | startswith("PASS")) and
+  .evidenceMode == "INTERACTIVE_PLAYWRIGHT" and
+  (.uiActions | length) == 4 and
+  (.apiAssertions | length) == 3 and
+  (.domAssertions | length) == 2 and
+  (.pageErrors | length) == 0 and
+  (.requestFailures | length) == 0 and
+  (.externalRequests | length) == 0 and
+  (.screenshots | length) == 3
+' "$run_dir/result.json" >/dev/null
 
-curl --fail --silent --show-error \
-  -X POST \
-  -H 'Content-Type: application/json' \
-  -H 'X-AgentGuard-Intent: human-ui-v1' \
-  --data '{}' \
-  "$app_url/api/approve" >"$run_dir/approval-valid.json"
-
-jq -e '
-  .decision == "ALLOW" and
-  .reason == "APPROVAL_VALID" and
-  .beforeAction == "COUNT" and
-  .requestedAction == "BLOCK" and
-  .actualAction == "BLOCK" and
-  .mutationPerformed == true and
-  .verified == true and
-  .audit == "RECORDED"
-' "$run_dir/approval-valid.json" >/dev/null
-capture_screenshot approval-valid
-
-curl --fail --silent --show-error \
-  -X POST \
-  -H 'Content-Type: application/json' \
-  -H 'X-AgentGuard-Intent: human-ui-v1' \
-  --data '{}' \
-  "$app_url/api/reset" >/dev/null
-
-curl --fail --silent --show-error \
-  -X POST \
-  -H 'Content-Type: application/json' \
-  -H 'X-AgentGuard-Intent: human-ui-v1' \
-  --data '{}' \
-  "$app_url/api/bypass" >"$run_dir/bypass.json"
-
-jq -e '
-  .decision == "DENY" and
-  .reason == "HUMAN_APPROVAL_REQUIRED" and
-  .actualAction == "COUNT" and
-  .mutationPerformed == false and
-  .verified == false
-' "$run_dir/bypass.json" >/dev/null
-capture_screenshot bypass-denied
+for screenshot in proposal approval-valid bypass-denied; do
+  [[ -s "$run_dir/$screenshot.png" ]] || fail "missing screenshot: $screenshot.png"
+done
 
 cmp -s "$run_dir/proposal.png" "$run_dir/bypass-denied.png" && \
   fail "proposal and bypass screenshots are identical"
@@ -283,21 +241,36 @@ wait_for_port_release "$api_port"
 wait_for_port_release "$frontend_port"
 remove_browser_work_dir
 
-proposal_sha="$(sha256sum "$run_dir/proposal.png" | awk '{print $1}')"
-approval_sha="$(sha256sum "$run_dir/approval-valid.png" | awk '{print $1}')"
-bypass_sha="$(sha256sum "$run_dir/bypass-denied.png" | awk '{print $1}')"
+result="$(jq -r '.result' "$run_dir/result.json")"
+console_error_count="$(jq '.consoleErrors | length' "$run_dir/result.json")"
+http_error_count="$(jq '.httpErrors | length' "$run_dir/result.json")"
+jq '.cleanup = {
+  browser: "CLOSED",
+  services: "STOPPED",
+  ports: "RELEASED",
+  temporaryFiles: "REMOVED"
+}' "$run_dir/result.json" >"$run_dir/result.tmp"
+mv "$run_dir/result.tmp" "$run_dir/result.json"
+
 {
-  printf 'RESULT=PASS\n'
+  printf 'RESULT=%s\n' "$result"
   printf 'MODE=synthetic\n'
+  printf 'EVIDENCE_MODE=INTERACTIVE_PLAYWRIGHT\n'
+  printf 'PLAYWRIGHT_CORE=PINNED_REPO_DEPENDENCY\n'
+  printf 'UI_ACTIONS=4\n'
+  printf 'API_ASSERTIONS=3\n'
+  printf 'DOM_ASSERTIONS=2\n'
+  printf 'CONSOLE_ERRORS=%s\n' "$console_error_count"
+  printf 'HTTP_ERRORS=%s\n' "$http_error_count"
+  printf 'PAGE_ERRORS=0\n'
+  printf 'REQUEST_FAILURES=0\n'
+  printf 'EXTERNAL_REQUESTS=0\n'
   printf 'PROPOSAL=APPROVAL_REQUIRED COUNT_TO_BLOCK MUTATION_FALSE\n'
   printf 'APPROVAL=ALLOW APPROVAL_VALID COUNT_TO_BLOCK MUTATION_TRUE VERIFIED_TRUE\n'
   printf 'BYPASS=DENY HUMAN_APPROVAL_REQUIRED MUTATION_FALSE\n'
-  printf 'PROPOSAL_PNG_SHA256=%s\n' "$proposal_sha"
-  printf 'APPROVAL_PNG_SHA256=%s\n' "$approval_sha"
-  printf 'BYPASS_PNG_SHA256=%s\n' "$bypass_sha"
-  printf 'CLEANUP=PORTS_RELEASED\n'
+  printf 'CLEANUP=BROWSER_CLOSED SERVICES_STOPPED PORTS_RELEASED TEMPORARY_FILES_REMOVED\n'
 } >"$run_dir/result.txt"
 
 trap - EXIT INT TERM
-printf 'PASS: proposal, approval, and bypass browser evidence captured\n'
+printf '%s: proposal, approval, and bypass Playwright evidence captured\n' "$result"
 printf 'Evidence: %s\n' "$run_dir"
