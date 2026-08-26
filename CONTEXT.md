@@ -13,13 +13,18 @@ Updated: 2026-08-27
 - PR #15 is merged with the accepted next-step selection packet.
 - PR #17 is merged and Issue #16 is complete and closed.
 - PR #19 is merged and Issue #18 is complete and closed.
+- PR #20 is merged with the accepted two-control Compliance Guard request.
+- PR #22 is merged and Issue #21 is complete and closed.
 - The repository now has a working local deterministic policy core, synthetic
   WAF adapter, React Decision Panel, and local-only Python API.
 - Existing local behavior covers `ALLOW / DENY / APPROVAL REQUIRED`, exact
   approval, rejection, replay/drift denial, synthetic verification, audit, and
   approval-bypass denial.
-- Current validation passes 31 Python tests, three frontend tests, a successful
-  Vite build, and the three-state interactive Playwright browser proof.
+- Current validation passes 37 Python tests, three frontend tests, a successful
+  Vite build, and both WAF and Compliance Guard interactive Playwright proofs.
+- Compliance Guard locally models one synthetic bucket, exactly two S3
+  controls, exact server-owned remediation mappings, one-time approval,
+  rescan, verification, audit, and bypass denial.
 
 ## Phase 2 result
 
@@ -49,11 +54,14 @@ Firewall, Approve Once, Reset, and Try Approval Bypass; asserts API and
 rendered state; records browser hygiene; captures three alias-only screenshots;
 and proves exact cleanup.
 
-The current gate is a GitHub-only ChatGPT next-step review within the
-owner-selected Compliance Guard direction. No Compliance Guard implementation,
-AWS call, S3 mutation, SSM execution, IAM widening, model call, deployment,
-RAG, or cloud resource is approved until one bounded recommendation is returned
-and accepted.
+The two-control Compliance Guard POC is complete. Its browser proof and
+`docs/demo-compliance.md` use synthetic aliases only. No AWS Config evaluation,
+S3 mutation, SSM execution, IAM widening, model call, deployment, or cloud
+resource was added.
+
+The next gate is another GitHub-only ChatGPT next-step review. No additional
+feature or cloud authority is approved until one bounded recommendation is
+returned and accepted or Amit explicitly overrides that gate.
 
 ## Phase 2 boundary
 
