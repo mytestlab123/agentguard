@@ -2,11 +2,14 @@
 
 ## Bottom line
 
-AgentGuard now has a strict trust boundary between untrusted agent intent and
-the existing immutable proposal and approval flow. The agent may request only
-`target`, `rule`, and `action`; all authority-bearing fields are created from
-trusted server inputs. The current PR passed the complete local test suite and
-the three-state browser E2E proof.
+PR #17 adds a local, unit-tested trust-boundary module for future untrusted
+agent intent. The module accepts only `target`, `rule`, and `action`; all
+authority-bearing fields are created from trusted server inputs. It is not yet
+connected to the running API or GUI.
+
+The current PR passed the complete local test suite. The three-state browser
+E2E proof confirms that the existing proposal, approval, and bypass workflow
+still works; it does not demonstrate the new boundary module.
 
 This is a synthetic POC report. It does not prove a real AWS WAF mutation.
 
@@ -23,10 +26,21 @@ This is a synthetic POC report. It does not prove a real AWS WAF mutation.
 ChatGPT selected this bounded milestone after reviewing the repository truth in
 the [next-step handoff](https://github.com/mytestlab123/agentguard/pull/15#issuecomment-5429042138).
 
-## What changed
+## Proof status
 
-The new boundary converts a minimal untrusted request into a trusted typed
-proposal:
+| Capability | Status | Evidence |
+| --- | --- | --- |
+| Parse minimal untrusted intent | TEST-PROVEN | Focused Python tests |
+| Reject authority injection and target swaps | TEST-PROVEN | Focused Python tests |
+| Create a trusted immutable proposal | TEST-PROVEN | Focused Python tests |
+| Accept agent intent through the local API | NOT BUILT | Outside Issue #16 scope |
+| Display agent-intent validation in the GUI | NOT BUILT | Outside Issue #16 scope |
+| Existing proposal, approval, and bypass flow | DEMO-PROVEN | Browser E2E and screenshots |
+
+## What was built
+
+The new standalone boundary function converts a minimal untrusted request into
+a trusted typed proposal:
 
 ```text
 untrusted agent intent: target + rule + action
@@ -109,6 +123,11 @@ The repo-owned runner:
 7. stops its process group, removes its temporary browser profile, and confirms
    both ports were released.
 
+This is a regression check for the existing browser workflow. Issue #16
+deliberately made no API or GUI change, so the screenshots cannot show the new
+intent boundary. A future separately scoped integration can add browser proof
+for accepted and rejected agent intent.
+
 Temporary browser evidence is written outside Git under
 `~/.AGENTS-temp/agentguard/browser-e2e/`. The accepted sanitized screenshots
 below were copied into this proof directory for an offline demo fallback.
@@ -121,22 +140,14 @@ below were copied into this proof directory for an offline demo fallback.
 | Complete Python suite | PASS - 31 tests |
 | Frontend API-client suite | PASS - 3 tests |
 | Vite production build | PASS |
-| Proposal browser state | PASS - `APPROVAL_REQUIRED`, no mutation |
-| Valid approval browser state | PASS - `ALLOW`, `APPROVAL_VALID`, verified |
-| Approval-bypass browser state | PASS - `DENY`, no mutation |
+| Existing proposal browser regression | PASS - `APPROVAL_REQUIRED`, no mutation |
+| Existing valid-approval browser regression | PASS - `ALLOW`, `APPROVAL_VALID`, verified |
+| Existing approval-bypass browser regression | PASS - `DENY`, no mutation |
 | Screenshot integrity | PASS - 3 distinct nonempty PNG files |
 | E2E cleanup | PASS - owned ports released |
 | Public-safety review | PASS - synthetic aliases only |
 
-### Screenshot checksums
-
-| Screenshot | SHA-256 |
-| --- | --- |
-| `proposal.png` | `aba9326aa482c150b3076feb39a1b3173ca07db2a53f166942cacb71f00d1038` |
-| `approval-valid.png` | `c0b589555784a84191cc7ac4b3086d7100f031397d2bcde1ce3ffcba09685afd` |
-| `bypass-denied.png` | `6e6bb212fa9d2923fc48ed8d479104b69f15f033b3a5df355fb5ee9f96a2d052` |
-
-## Full screenshots
+## Full screenshots of the existing browser workflow
 
 ### 1. Proposal requires human approval
 
@@ -183,9 +194,10 @@ This checkpoint deliberately does not add:
 - cloud deployment or enterprise browser infrastructure;
 - new runtime dependencies.
 
-The intent boundary is a small, independently tested Python seam. The existing
-browser proof still exercises the deterministic synthetic policy flow; PR #17
-does not claim a new visible GUI state.
+The intent boundary is a small, independently tested Python seam. The running
+demo still creates its proposal from trusted synthetic or read-only fixtures;
+it does not yet accept arbitrary agent intent. PR #17 therefore does not claim
+a new visible GUI state or end-to-end intent integration.
 
 ## Reproduce the proof
 

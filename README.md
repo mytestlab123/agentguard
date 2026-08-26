@@ -118,11 +118,15 @@ framework.
 
 If the local application cannot be started, use the accepted sanitized proof:
 
-- [`docs/demo-proof/output.md`](docs/demo-proof/output.md)
+- management presentation: [`docs/demo.md`](docs/demo.md);
+- technical test report: [`docs/demo-proof/report.md`](docs/demo-proof/report.md);
+- compact three-state snapshot: [`docs/demo-proof/output.md`](docs/demo-proof/output.md).
 
-It shows `APPROVAL REQUIRED`, `ALLOW / APPROVAL_VALID`, and bypass `DENY` with
-relative screenshots that render directly on GitHub. The screenshots use only
-synthetic aliases and do not prove a real AWS mutation.
+The presentation and proof show `APPROVAL REQUIRED`,
+`ALLOW / APPROVAL_VALID`, and bypass `DENY` with relative screenshots that
+render directly on GitHub. The screenshots use only synthetic aliases and do
+not prove a real AWS mutation. The management presentation separately labels
+the new agent-intent boundary as test-proven but not yet UI-integrated.
 
 ## Live AWS read-only proof
 
