@@ -15,6 +15,7 @@ venv/
 # Build and local runtime output
 build/
 dist/
+node_modules/
 *.egg-info/
 coverage.xml
 htmlcov/

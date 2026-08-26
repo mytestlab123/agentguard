@@ -1,5 +1,9 @@
 # Architecture: Planned Trust Boundaries
 
+This file records the earlier RAG Phase 0 design. The active AgentGuard v1
+design is in [AGENTGUARD_V1_UX.md](AGENTGUARD_V1_UX.md); the executable local
+security boundary is under `src/agentguard/`.
+
 This document describes a future local learning design, not a deployed system.
 
 ```text
