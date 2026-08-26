@@ -22,6 +22,10 @@ aliases, exact target/rule selection is enforced, missing/ambiguous/non-COUNT
 states fail closed, SDK errors are sanitized, runtime configuration is exact,
 and the live reader has no mutation surface.
 
+`test_proposal_boundary.py` proves that only exact target/rule/BLOCK intent can
+become a trusted proposal. Unknown authority fields, malformed input, swaps,
+and invalid observed state fail closed with stable non-echoing reasons.
+
 The frontend API-client test protects the fixed action-to-route allowlist and
 generic browser error boundary. Authorization transition tests live in Python
 only so there is one policy authority.

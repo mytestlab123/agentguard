@@ -12,14 +12,15 @@ The core rule is:
 
 ## Current POC scope
 
-GitHub Issue #11 is the approved sanitized offline proof scope:
+GitHub Issue #16 is the approved untrusted-agent intent boundary scope:
 
-- keep the existing synthetic API and frontend on explicit free loopback ports;
-- assert proposal, exact approval, and approval-bypass states through documented
-  API routes;
-- generate temporary browser evidence outside Git;
-- retain only the three approved synthetic snapshots under `docs/demo-proof/`;
-- clean up only the processes and temporary profile created by the runner.
+- accept only exact `target`, `rule`, and `action` intent fields;
+- allow only the current synthetic `COUNT -> BLOCK` request;
+- derive proposal hash, lock token, ID, version, and expiry from trusted state
+  and server-owned inputs;
+- reject authority injection, malformed fields, and target/rule/action swaps
+  with stable public-safe reasons;
+- leave the API, GUI, approval, and mutation-service semantics unchanged.
 
 This is a local POC. It must not call or mutate AWS.
 
@@ -49,14 +50,24 @@ This is a local POC. It must not call or mutate AWS.
 - Do not commit AWS account IDs, ARNs, WebACL IDs, credentials, tokens, `.env`
   values, private documents, internal material, or raw operational logs.
 - Do not allow browser/model input to select arbitrary AWS resources.
+- Do not accept proposal, approval, lock, hash, expiry, scope, region, or policy
+  fields from untrusted agent intent, and do not echo rejected payloads.
 - Do not add Bedrock/AgentCore model calls, paid services, or new cloud
   resources unless separately approved.
 - Stop if an AWS error or log path could expose real identifiers publicly.
 
 ## Validation
 
-Retain the existing policy and read-only AWS tests. For the browser runner,
-prove:
+Retain the existing policy, read-only AWS, and browser tests. For the intent
+boundary, prove:
+
+1. exact minimal intent creates a server-owned proposal;
+2. the resulting proposal still requires human approval;
+3. extra authority fields and malformed schemas return `INVALID_AGENT_INTENT`;
+4. target, rule, action, and observed-state swaps fail closed;
+5. errors expose stable reasons without untrusted payload values.
+
+For the browser runner, continue to prove:
 
 1. proposal JSON is `APPROVAL_REQUIRED`, `COUNT -> BLOCK`, mutation false;
 2. approved JSON is `ALLOW / APPROVAL_VALID`, actual BLOCK, mutation and

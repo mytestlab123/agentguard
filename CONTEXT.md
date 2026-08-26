@@ -10,12 +10,13 @@ Updated: 2026-08-27
 - PR #9 is merged and Issue #8 is complete and closed.
 - PR #12 is merged and Issue #11 is complete and closed.
 - PR #14 is merged and Issue #13 is complete and closed.
+- PR #15 is merged with the accepted next-step selection packet.
 - The repository now has a working local deterministic policy core, synthetic
   WAF adapter, React Decision Panel, and local-only Python API.
 - Existing local behavior covers `ALLOW / DENY / APPROVAL REQUIRED`, exact
   approval, rejection, replay/drift denial, synthetic verification, audit, and
   approval-bypass denial.
-- Current validation passes 26 Python tests, three frontend tests, a successful
+- Current validation passes 31 Python tests, three frontend tests, a successful
   Vite build, and the three-state browser E2E proof.
 
 ## Phase 2 result
@@ -41,13 +42,13 @@ GitHub Issue #6 was completed in merged PR #7:
 
 ## Current gate
 
-No next implementation milestone is selected. The accepted current truth is
-being packaged for the GitHub-only ChatGPT handoff. ChatGPT must select exactly
-one bounded next learning objective before Codex creates or implements another
-feature, unless Amit explicitly overrides that gate.
+ChatGPT selected Issue #16: add one local untrusted-agent intent boundary before
+`WafChangeProposal` creation. The only accepted untrusted fields are target,
+rule, and action. Trusted observed state and server-owned metadata construct the
+proposal; authority injection fails closed without echoing payloads.
 
-No Phase 3 mutation work, IAM widening, model service, deployment, or new AWS
-resource is approved.
+No API/GUI change, model call, AWS mutation, IAM widening, deployment, RAG, or
+new dependency/resource is approved.
 
 ## Phase 2 boundary
 
@@ -74,5 +75,5 @@ A later separately approved Issue may consider the first real guarded WAF
 mutation using exact proposal validation, one-time human approval, AWS
 LockToken, narrow IAM, reread, and Before -> Action -> After verification.
 
-RAG/memory poisoning remains a future AgentGuard regression scenario, not an
-active standalone implementation track.
+Issues #1-#3 remain future umbrella backlog only. RAG, broader tokenisation,
+and memory poisoning are not active implementation tracks.
