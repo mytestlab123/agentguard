@@ -12,6 +12,7 @@ Updated: 2026-08-27
 - PR #14 is merged and Issue #13 is complete and closed.
 - PR #15 is merged with the accepted next-step selection packet.
 - PR #17 is merged and Issue #16 is complete and closed.
+- PR #19 is merged and Issue #18 is complete and closed.
 - The repository now has a working local deterministic policy core, synthetic
   WAF adapter, React Decision Panel, and local-only Python API.
 - Existing local behavior covers `ALLOW / DENY / APPROVAL REQUIRED`, exact
@@ -43,14 +44,16 @@ GitHub Issue #6 was completed in merged PR #7:
 
 ## Current gate
 
-Issue #18 is the active bounded proof refresh. The repo-owned browser runner
-uses pinned Playwright Core to click Review Firewall, Approve Once, Reset, and
-Try Approval Bypass; asserts API and rendered state; records browser hygiene;
-captures three alias-only screenshots; and proves exact cleanup.
+The repo-owned browser runner now uses pinned Playwright Core to click Review
+Firewall, Approve Once, Reset, and Try Approval Bypass; asserts API and
+rendered state; records browser hygiene; captures three alias-only screenshots;
+and proves exact cleanup.
 
-No new product feature, agent-intent UI integration, model call, AWS mutation,
-IAM widening, deployment, RAG, or cloud resource is approved. Playwright Core
-is the single development-only dependency approved for browser evidence.
+The current gate is a GitHub-only ChatGPT next-step review within the
+owner-selected Compliance Guard direction. No Compliance Guard implementation,
+AWS call, S3 mutation, SSM execution, IAM widening, model call, deployment,
+RAG, or cloud resource is approved until one bounded recommendation is returned
+and accepted.
 
 ## Phase 2 boundary
 
