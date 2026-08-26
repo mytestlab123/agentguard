@@ -7,6 +7,7 @@ Updated: 2026-08-27
 - PR #5 was squash-merged into `main` at `76ac721`.
 - Issue #4 is complete and closed.
 - PR #7 is merged and Issue #6 is complete and closed.
+- PR #9 is merged and Issue #8 is complete and closed.
 - The repository now has a working local deterministic policy core, synthetic
   WAF adapter, React Decision Panel, and local-only Python API.
 - Existing local behavior covers `ALLOW / DENY / APPROVAL REQUIRED`, exact
@@ -38,10 +39,11 @@ GitHub Issue #6 was completed in merged PR #7:
 
 ## Current gate
 
-Issue #8 adds one KISS synthetic browser E2E runner. It must use free loopback
-ports, write screenshots outside Git, clean up only owned processes, and make
-no AWS call. No Phase 3 mutation work, IAM widening, or new AWS resource is
-approved.
+Issue #11 adds one KISS sanitized offline demo proof. The browser runner must
+assert proposal, exact approval, and bypass states, while raw evidence stays
+outside Git. Only three visually inspected synthetic screenshots may be kept
+under `docs/demo-proof/`. No Phase 3 mutation work, IAM widening, or new AWS
+resource is approved.
 
 ## Phase 2 boundary
 

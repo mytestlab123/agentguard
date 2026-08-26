@@ -103,6 +103,17 @@
 - Safety: synthetic mode only, loopback listeners only, evidence outside Git,
   no AWS call, and no stopping unrelated local applications.
 
+## 2026-08-27 - Sanitized offline demo proof
+
+- Objective: keep the trust-boundary demo showable when the live app cannot run.
+- Built: one additional approved-state assertion and screenshot in the existing
+  browser runner, plus a three-state Markdown proof under `docs/demo-proof/`.
+- Evidence: proposal requires approval, exact approval produces
+  `ALLOW / APPROVAL_VALID` with verified synthetic BLOCK, and bypass is denied
+  with COUNT retained.
+- Safety: only visually inspected synthetic alias-only PNGs enter Git; raw JSON,
+  logs, profiles, real identifiers, and AWS mutation remain excluded.
+
 ## 2026-08-26 - Phase 2 read-only WAF boundary
 
 - Objective: replace only the synthetic read evidence with one exact real AWS

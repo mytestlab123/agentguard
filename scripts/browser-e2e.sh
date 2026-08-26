@@ -234,6 +234,32 @@ curl --fail --silent --show-error \
   -H 'Content-Type: application/json' \
   -H 'X-AgentGuard-Intent: human-ui-v1' \
   --data '{}' \
+  "$app_url/api/approve" >"$run_dir/approval-valid.json"
+
+jq -e '
+  .decision == "ALLOW" and
+  .reason == "APPROVAL_VALID" and
+  .beforeAction == "COUNT" and
+  .requestedAction == "BLOCK" and
+  .actualAction == "BLOCK" and
+  .mutationPerformed == true and
+  .verified == true and
+  .audit == "RECORDED"
+' "$run_dir/approval-valid.json" >/dev/null
+capture_screenshot approval-valid
+
+curl --fail --silent --show-error \
+  -X POST \
+  -H 'Content-Type: application/json' \
+  -H 'X-AgentGuard-Intent: human-ui-v1' \
+  --data '{}' \
+  "$app_url/api/reset" >/dev/null
+
+curl --fail --silent --show-error \
+  -X POST \
+  -H 'Content-Type: application/json' \
+  -H 'X-AgentGuard-Intent: human-ui-v1' \
+  --data '{}' \
   "$app_url/api/bypass" >"$run_dir/bypass.json"
 
 jq -e '
@@ -246,7 +272,11 @@ jq -e '
 capture_screenshot bypass-denied
 
 cmp -s "$run_dir/proposal.png" "$run_dir/bypass-denied.png" && \
-  fail "positive and bypass screenshots are identical"
+  fail "proposal and bypass screenshots are identical"
+cmp -s "$run_dir/proposal.png" "$run_dir/approval-valid.png" && \
+  fail "proposal and approval screenshots are identical"
+cmp -s "$run_dir/approval-valid.png" "$run_dir/bypass-denied.png" && \
+  fail "approval and bypass screenshots are identical"
 
 stop_services
 wait_for_port_release "$api_port"
@@ -254,17 +284,20 @@ wait_for_port_release "$frontend_port"
 remove_browser_work_dir
 
 proposal_sha="$(sha256sum "$run_dir/proposal.png" | awk '{print $1}')"
+approval_sha="$(sha256sum "$run_dir/approval-valid.png" | awk '{print $1}')"
 bypass_sha="$(sha256sum "$run_dir/bypass-denied.png" | awk '{print $1}')"
 {
   printf 'RESULT=PASS\n'
   printf 'MODE=synthetic\n'
   printf 'PROPOSAL=APPROVAL_REQUIRED COUNT_TO_BLOCK MUTATION_FALSE\n'
+  printf 'APPROVAL=ALLOW APPROVAL_VALID COUNT_TO_BLOCK MUTATION_TRUE VERIFIED_TRUE\n'
   printf 'BYPASS=DENY HUMAN_APPROVAL_REQUIRED MUTATION_FALSE\n'
   printf 'PROPOSAL_PNG_SHA256=%s\n' "$proposal_sha"
+  printf 'APPROVAL_PNG_SHA256=%s\n' "$approval_sha"
   printf 'BYPASS_PNG_SHA256=%s\n' "$bypass_sha"
   printf 'CLEANUP=PORTS_RELEASED\n'
 } >"$run_dir/result.txt"
 
 trap - EXIT INT TERM
-printf 'PASS: proposal and bypass browser evidence captured\n'
+printf 'PASS: proposal, approval, and bypass browser evidence captured\n'
 printf 'Evidence: %s\n' "$run_dir"
