@@ -1,95 +1,104 @@
 # AgentGuard
 
-AgentGuard demonstrates why an AI security agent can be trusted when it
-proposes a sensitive action. Issue #4 is the active v1 implementation scope;
-the earlier RAG Phase 0 material remains below as repository history.
+AgentGuard demonstrates **why an AI security agent can be trusted when it
+proposes sensitive actions**.
 
-## Active v1 status
+> AI may investigate and propose. Deterministic controls, human approval, and
+> narrow AWS authority decide what can actually happen.
 
-- PR #5 defines the browser GUI and AWS WAF reuse strategy.
-- The first implementation slice is a local deterministic policy core.
-- A synthetic React Decision Panel now demonstrates review, exact approval,
-  rejection, verification, audit, and approval-bypass denial.
-- The panel consumes a local Python API; the browser no longer owns policy or
-  approval state.
-- It allows reads, requires approval for the one exact COUNT-to-BLOCK change,
-  binds approval to an immutable proposal, rejects replay and drift, verifies
-  the synthetic result, and emits an audit event.
-- No model, AWS adapter, credential, cloud resource, or billable API is used.
+## Current status
 
-Run the current proof with:
+The local visual proof is complete:
+
+- React manager-facing Decision Panel;
+- `ALLOW / DENY / APPROVAL REQUIRED` decisions;
+- typed immutable `COUNT -> BLOCK` proposal;
+- Approve Once / Reject;
+- replay and drift denial;
+- approval-bypass denial;
+- verification and audit state;
+- Python policy authority behind a local API.
+
+The current implementation is synthetic and performs no AWS mutation.
+
+## Next milestone — Issue #6
+
+Connect one disposable AWS WAF WebACL through a **read-only** adapter.
+
+Target browser story:
+
+```text
+Manager: Review my firewall configuration
+        |
+        v
+Real AWS GetWebACL
+        |
+        v
+Sanitized LAB_WAF_01
+        |
+        v
+LAB_AdminPathProtection = COUNT
+        |
+        v
+Typed proposal: COUNT -> BLOCK
+        |
+        v
+APPROVAL REQUIRED
+```
+
+Phase 2 must not call `UpdateWebACL` or require mutation IAM permissions.
+
+## Manager demo direction
+
+```text
++---------------------------+--------------------------+
+| AgentGuard Chat           | AGENTGUARD DECISION      |
+|                           |                          |
+| Review firewall           | APPROVAL REQUIRED        |
+|                           | Risk: HIGH               |
+| tool activity             | Target: LAB_WAF_01       |
+|                           | COUNT -> BLOCK           |
+|                           |                          |
+|                           | [Approve Once] [Reject]  |
++---------------------------+--------------------------+
+```
+
+The final v1 target, after a later separately reviewed mutation phase, is:
+
+```text
+READ -> ALLOW
+PROPOSE MUTATION -> APPROVAL REQUIRED
+APPROVE ONCE -> REAL WAF CHANGE -> VERIFIED
+BYPASS APPROVAL REQUEST -> DENY
+```
+
+## Local proof
 
 ```bash
 cd frontend
 npm ci
 cd ..
 ./scripts/check.sh
-PYTHONPATH=src python3 -m agentguard.demo
 ```
-
-See [docs/AGENTGUARD_V1_UX.md](docs/AGENTGUARD_V1_UX.md) for the target browser
-experience.
 
 Run the local browser demo with:
 
 ```bash
-cd frontend
-npm ci
-cd ..
 ./scripts/run-local.sh
 ```
 
-The local runner starts the Python policy API and Vite together and cleans up
-the API process when Vite exits. By default, the operating system assigns a
-free API port and the runner passes it to Vite. To request a specific free
-port, set `AGENTGUARD_API_PORT` for that invocation. The frontend remains
-disconnected from AWS and model services.
+See:
 
-## Local API boundary
+- `SPEC.md` for trust boundaries and stop gates;
+- `AGENTS.md` for coding-agent instructions;
+- `docs/AGENTGUARD_V1_UX.md` for the visual UX design;
+- GitHub Issue #6 for the active read-only AWS milestone.
 
-- `GET /api/state` returns sanitized synthetic presentation state.
-- Five fixed POST actions cover review, approve once, reject, bypass, and reset.
-- POST bodies must be empty JSON and carry the expected human-UI intent header.
-- Unknown actions, unexpected fields, replay, missing approval, and malformed
-  requests fail closed with stable generic reason codes.
-- The API binds only to the local host and emits no client-address logs.
+## Public repository safety
 
-The intent header provides local browser CSRF resistance. It is not production
-authentication and must not be treated as an AWS authorization boundary.
+Do not commit real credentials, AWS account IDs, ARNs, WebACL IDs, private
+hostnames, internal documents, or raw operational logs. Runtime AWS resources
+must be represented publicly through aliases such as `LAB_WAF_01`.
 
-## Earlier Phase 0 origin
-
-A small personal learning lab for understanding retrieval-augmented generation
-(RAG), memory, and privacy controls through local, synthetic experiments.
-
-### Status at bootstrap
-
-Phase 0 bootstrap only. No retrieval system, model client, cloud resource, or
-external service is implemented yet.
-
-### Earlier learning focus
-
-- Safe document ingestion, chunking, and retrieval
-- Grounded answers with evidence
-- Session and durable memory boundaries
-- Identifier tokenisation and local resolution
-- Retrieval and memory poisoning defenses
-
-### Safety boundary
-
-This public repository contains synthetic examples only. Do not add real
-organization data, cloud identifiers, credentials, tokens, `.env` values,
-logs, screenshots, or production configuration.
-
-Start with local fixtures and deterministic checks. Any future cloud, API, or
-external publication action needs explicit approval.
-
-### Planned layout
-
-- `data/synthetic/` contains safe example inputs only.
-- `src/` will contain the learning implementation.
-- `tests/` will contain deterministic regression checks.
-- `docs/` records the design and learning evidence.
-
-Read [SPEC.md](SPEC.md) before implementation and record completed lessons in
-[docs/LEARNING_LOG.md](docs/LEARNING_LOG.md).
+RAG/memory poisoning remains a future AgentGuard regression scenario rather
+than the active project scope.
