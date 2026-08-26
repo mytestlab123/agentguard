@@ -5,8 +5,13 @@ the human owner.
 
 Start here:
 
+- [Generic all-repository protocol Gist](https://gist.github.com/amitkarpe/c8d29ad89cafe3ba178fcae29de3c238)
 - [GitHub-only Codex ↔ ChatGPT Collaboration Protocol](GITHUB_ONLY_COLLABORATION_PROTOCOL.md)
 - `inbox/` contains immutable request packets committed for ChatGPT review.
+
+Share both the generic Gist and the repo-specific immutable request URL with
+ChatGPT. The Gist stays repository-neutral; the protocol in this directory
+defines AgentGuard's additional handoff rules.
 
 ## Core rule
 

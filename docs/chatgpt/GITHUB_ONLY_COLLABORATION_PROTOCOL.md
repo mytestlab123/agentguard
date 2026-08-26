@@ -6,6 +6,14 @@ Use GitHub as the durable handoff layer between Codex, ChatGPT, and the human
 owner while keeping each AgentGuard learning milestone small, reviewable, and
 safe.
 
+This file specializes the generic all-repository protocol published at:
+
+<https://gist.github.com/amitkarpe/c8d29ad89cafe3ba178fcae29de3c238>
+
+The Gist remains repository-neutral. This file is the AgentGuard-specific
+policy. Every AgentGuard handoff must share both the Gist and the immutable
+repo-specific packet, Issue, or PR URL.
+
 The most important rule is:
 
 > **After a completed milestone, Codex must ask ChatGPT what AgentGuard should do next before creating or implementing the next feature.**
@@ -86,6 +94,7 @@ only a moving branch.
 
 The packet should contain only the facts ChatGPT needs to choose the next step:
 
+- the generic protocol Gist URL;
 - repository and current commit/merged milestone;
 - what is already working;
 - validation evidence;
@@ -201,7 +210,10 @@ Public-repository safety remains mandatory throughout the handoff.
 ```text
 ChatGPT review requested.
 
-Read the immutable AgentGuard request packet:
+First read the generic collaboration protocol:
+https://gist.github.com/amitkarpe/c8d29ad89cafe3ba178fcae29de3c238
+
+Then read the immutable AgentGuard request packet:
 <IMMUTABLE_GITHUB_URL>
 
 Then review the current repository, relevant merged PRs/closed Issues, and open
