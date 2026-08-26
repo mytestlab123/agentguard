@@ -93,7 +93,7 @@ Owner-provided public control references include:
 - **S3 buckets should not allow public read access**:
   <https://docs.developer.tech.gov.sg/docs/cloudscape-user-guide/rules/aws/[AWS-1028]-S3-buckets-should-not-allow-public-read-access>
 
-Owner-provided `CS 1.6/S4a` S3 control examples:
+Owner-provided public S3 control examples:
 
 | Resource Type | Public control reference |
 | --- | --- |
