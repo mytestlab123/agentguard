@@ -14,34 +14,31 @@ Updated: 2026-08-26
 - Validation reported after the merge: 17 Python tests, 3 frontend tests, and
   a successful Vite build.
 
-## Active next scope
+## Phase 2 result
 
-GitHub Issue #6 is the next implementation gate:
+GitHub Issue #6 is implemented in draft PR #7:
 
 > Connect exactly one real disposable AWS WAF target through a read-only path.
 
-The browser should show `LIVE AWS - READ ONLY`, read the configured WebACL,
-sanitize it to public-safe aliases, confirm the selected rule is in `COUNT`,
-and feed that evidence into the existing typed `COUNT -> BLOCK` proposal and
-deterministic policy flow.
-
-## Implementation checkpoint
-
-- Draft PR #7 now contains the Phase 2 instruction baseline.
-- The local branch adds a narrow `GetWebACL` reader, runtime-only exact target
+- Draft PR #7 adds a narrow `GetWebACL` reader, runtime-only exact target
   configuration, alias-only output, stable safe errors, live API/UI mode,
   mocked tests, and a repo-owned live proof command.
 - Canonical local validation passes 26 Python tests, three frontend tests, and
   the Vite production build.
-- Read-only discovery with the approved AWS profile succeeded, but found zero
-  Regional WebACLs in the selected region and zero CloudFront WebACLs.
-- No AWS resource was created or mutated.
+- One explicitly approved, tagged, TTL-bound, unassociated disposable WebACL
+  was created for the acceptance run. The repo-owned proof read the real COUNT
+  rule and emitted aliases only.
+- Browser acceptance showed `LIVE AWS - READ ONLY`, COUNT-to-BLOCK proposal,
+  `APPROVAL REQUIRED`, disabled live approval, mutation NO, and bypass DENY.
+- The exact disposable WebACL was deleted after evidence capture. Regional WAF
+  inventory returned to zero and exact reread returned not found.
+- Raw identifiers, runtime configuration, AWS responses, and screenshots remain
+  outside Git under the private evidence directory.
 
-## Current blocker
+## Current gate
 
-The real acceptance proof needs one disposable WebACL with one COUNT rule.
-Creating it is outside the current read-only authority and needs separate exact
-approval with tags, TTL, and cleanup ownership.
+Review draft PR #7. No Phase 3 mutation work, IAM widening, or new AWS resource
+is approved.
 
 ## Phase 2 boundary
 

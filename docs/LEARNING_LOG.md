@@ -102,8 +102,15 @@
   no resource selector; synthetic mode remains the test default.
 - Local validation: 26 Python tests, three frontend tests, Bash parser checks,
   and the Vite production build pass without AWS access.
-- AWS discovery: the approved account currently has no Regional WebACL in the
-  selected region and no CloudFront WebACL, so no live target was read and no
-  resource was created.
-- Decision: stop at the resource-creation approval gate. A disposable WebACL
-  requires separate exact approval, tags, TTL, and cleanup ownership.
+- Live evidence: after exact approval, one tagged, TTL-bound, unassociated
+  disposable WebACL with one COUNT rule was read through the repo-owned proof.
+  Output contained only `LAB_WAF_01`, `LAB_AdminPathProtection`, COUNT, BLOCK,
+  the deterministic decision, and no raw AWS identifiers.
+- Browser evidence: live review showed `LIVE AWS - READ ONLY`, APPROVAL REQUIRED,
+  disabled approval, and mutation NO; bypass showed DENY,
+  HUMAN_APPROVAL_REQUIRED, and mutation NO.
+- Cleanup: the exact disposable WebACL was deleted after capture; Regional WAF
+  inventory returned to zero and exact reread returned not found. No AWS
+  resource or write authority remains.
+- Limits: Phase 3 mutation, LockToken execution, write IAM, model integration,
+  deployment, and multi-target support remain unapproved.

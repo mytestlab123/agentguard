@@ -8,7 +8,7 @@ proposes sensitive actions**.
 
 ## Current status
 
-The local visual proof is complete:
+The local visual proof and Phase 2 real AWS read-only proof are complete:
 
 - React manager-facing Decision Panel;
 - `ALLOW / DENY / APPROVAL REQUIRED` decisions;
@@ -18,12 +18,17 @@ The local visual proof is complete:
 - approval-bypass denial;
 - verification and audit state;
 - Python policy authority behind a local API.
+- exact runtime-configured AWS WAF read through `GetWebACL`;
+- alias-only live evidence and stable sanitized failures;
+- visible `LIVE AWS - READ ONLY` mode with live approval disabled.
 
-The current implementation is synthetic and performs no AWS mutation.
+The implementation keeps synthetic mode for tests and supports one exact live
+read target. It has no AWS mutation adapter or write IAM requirement.
 
-## Next milestone — Issue #6
+## Phase 2 - Issue #6
 
-Connect one disposable AWS WAF WebACL through a **read-only** adapter.
+One disposable AWS WAF WebACL was connected through the read-only adapter for
+the acceptance proof, then deleted after evidence capture.
 
 Target browser story:
 
