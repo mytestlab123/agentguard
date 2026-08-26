@@ -9,6 +9,7 @@ python3 -m agentguard.demo >/dev/null
 /usr/bin/bash -n "${repo_root}/scripts/run-local.sh"
 /usr/bin/bash -n "${repo_root}/scripts/prove-live-read.sh"
 /usr/bin/bash -n "${repo_root}/scripts/browser-e2e.sh"
+node --check "${repo_root}/scripts/browser-e2e.mjs"
 
 if [[ ! -d "${repo_root}/frontend/node_modules" ]]; then
   printf '%s\n' 'ERROR: frontend dependencies missing; run npm ci in frontend' >&2

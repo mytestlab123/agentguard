@@ -2,14 +2,14 @@
 
 ## Bottom line
 
-PR #17 adds a local, unit-tested trust-boundary module for future untrusted
-agent intent. The module accepts only `target`, `rule`, and `action`; all
-authority-bearing fields are created from trusted server inputs. It is not yet
-connected to the running API or GUI.
+Issue #18 replaces API-seeded rendering evidence with an interactive
+Playwright Core journey. The runner clicks the real controls, asserts the
+matching API and rendered decision state, captures three screenshots, records
+browser hygiene, and proves cleanup.
 
-The current PR passed the complete local test suite. The three-state browser
-E2E proof confirms that the existing proposal, approval, and bypass workflow
-still works; it does not demonstrate the new boundary module.
+The complete local test suite and three-state browser E2E proof pass. The
+separate untrusted-agent intent boundary remains deterministic TEST-PROVEN
+logic and is still not connected to the running API or GUI.
 
 This is a synthetic POC report. It does not prove a real AWS WAF mutation.
 
@@ -17,14 +17,13 @@ This is a synthetic POC report. It does not prove a real AWS WAF mutation.
 
 | Item | Value |
 | --- | --- |
-| Issue | [#16 - Add a strict untrusted-agent intent boundary](https://github.com/mytestlab123/agentguard/issues/16) |
-| Pull request | [#17 - Add strict untrusted-agent intent boundary](https://github.com/mytestlab123/agentguard/pull/17) |
-| Tested commit | `514c0e35f6be93c509318f6724e73e6ac4bf35b0` |
+| Issue | [#18 - Use Playwright Core for interactive demo proof](https://github.com/mytestlab123/agentguard/issues/18) |
 | Test date | 2026-08-27 |
-| State | PR open; validated but not yet merged |
+| Browser evidence | PASS - interactive Playwright journey |
+| Screenshot state | Three visually inspected 1920 x 1080 alias-only images |
+| Cleanup state | Browser closed; services stopped; ports released; temporary files removed |
 
-ChatGPT selected this bounded milestone after reviewing the repository truth in
-the [next-step handoff](https://github.com/mytestlab123/agentguard/pull/15#issuecomment-5429042138).
+The current proof is local synthetic evidence. It does not make an AWS call.
 
 ## Proof status
 
@@ -35,7 +34,7 @@ the [next-step handoff](https://github.com/mytestlab123/agentguard/pull/15#issue
 | Create a trusted immutable proposal | TEST-PROVEN | Focused Python tests |
 | Accept agent intent through the local API | NOT BUILT | Outside Issue #16 scope |
 | Display agent-intent validation in the GUI | NOT BUILT | Outside Issue #16 scope |
-| Existing proposal, approval, and bypass flow | DEMO-PROVEN | Browser E2E and screenshots |
+| Existing proposal, approval, and bypass flow | DEMO-PROVEN | Playwright UI actions, API and DOM assertions, screenshots |
 
 ## What was built
 
@@ -116,12 +115,13 @@ The repo-owned runner:
 
 1. selects unused loopback ports;
 2. starts the synthetic Python API and Vite frontend;
-3. drives proposal, approval, reset, and bypass API actions;
-4. checks the JSON decisions with `jq` before capture;
-5. captures three 1920 x 1080 Chrome screenshots;
-6. confirms the PNG files are nonempty and pairwise distinct;
-7. stops its process group, removes its temporary browser profile, and confirms
-   both ports were released.
+3. launches installed Chrome through pinned Playwright Core;
+4. clicks Review Firewall, Approve Once, Reset, and Try Approval Bypass;
+5. asserts the matching API payload and rendered decision and reason;
+6. records console, page, request, HTTP, and external-network observations;
+7. captures three 1920 x 1080 screenshots and confirms they are distinct;
+8. closes the browser, stops its service group, removes temporary files, and
+   confirms both ports were released.
 
 This is a regression check for the existing browser workflow. Issue #16
 deliberately made no API or GUI change, so the screenshots cannot show the new
@@ -140,11 +140,14 @@ below were copied into this proof directory for an offline demo fallback.
 | Complete Python suite | PASS - 31 tests |
 | Frontend API-client suite | PASS - 3 tests |
 | Vite production build | PASS |
-| Existing proposal browser regression | PASS - `APPROVAL_REQUIRED`, no mutation |
-| Existing valid-approval browser regression | PASS - `ALLOW`, `APPROVAL_VALID`, verified |
-| Existing approval-bypass browser regression | PASS - `DENY`, no mutation |
+| Proposal browser journey | PASS - `APPROVAL_REQUIRED`, no mutation |
+| Valid-approval browser journey | PASS - `ALLOW`, `APPROVAL_VALID`, verified |
+| Approval-bypass browser journey | PASS - `DENY`, no mutation |
+| Browser actions | PASS - four real UI clicks |
+| API and DOM assertions | PASS - three matching state transitions |
+| Browser hygiene | PASS - zero console, page, request, HTTP, or external-network errors |
 | Screenshot integrity | PASS - 3 distinct nonempty PNG files |
-| E2E cleanup | PASS - owned ports released |
+| E2E cleanup | PASS - browser, services, ports, and temporary files cleaned |
 | Public-safety review | PASS - synthetic aliases only |
 
 ## Full screenshots of the existing browser workflow
@@ -192,12 +195,12 @@ This checkpoint deliberately does not add:
 - real resource identifiers in the browser;
 - API or GUI integration for accepting arbitrary agent intent;
 - cloud deployment or enterprise browser infrastructure;
-- new runtime dependencies.
+- browser automation beyond one pinned development-only Playwright Core package.
 
 The intent boundary is a small, independently tested Python seam. The running
 demo still creates its proposal from trusted synthetic or read-only fixtures;
-it does not yet accept arbitrary agent intent. PR #17 therefore does not claim
-a new visible GUI state or end-to-end intent integration.
+it does not yet accept arbitrary agent intent. The merged intent-boundary
+milestone therefore remains TEST-PROVEN rather than visible end-to-end proof.
 
 ## Reproduce the proof
 

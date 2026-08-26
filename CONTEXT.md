@@ -11,13 +11,14 @@ Updated: 2026-08-27
 - PR #12 is merged and Issue #11 is complete and closed.
 - PR #14 is merged and Issue #13 is complete and closed.
 - PR #15 is merged with the accepted next-step selection packet.
+- PR #17 is merged and Issue #16 is complete and closed.
 - The repository now has a working local deterministic policy core, synthetic
   WAF adapter, React Decision Panel, and local-only Python API.
 - Existing local behavior covers `ALLOW / DENY / APPROVAL REQUIRED`, exact
   approval, rejection, replay/drift denial, synthetic verification, audit, and
   approval-bypass denial.
 - Current validation passes 31 Python tests, three frontend tests, a successful
-  Vite build, and the three-state browser E2E proof.
+  Vite build, and the three-state interactive Playwright browser proof.
 
 ## Phase 2 result
 
@@ -42,13 +43,14 @@ GitHub Issue #6 was completed in merged PR #7:
 
 ## Current gate
 
-ChatGPT selected Issue #16: add one local untrusted-agent intent boundary before
-`WafChangeProposal` creation. The only accepted untrusted fields are target,
-rule, and action. Trusted observed state and server-owned metadata construct the
-proposal; authority injection fails closed without echoing payloads.
+Issue #18 is the active bounded proof refresh. The repo-owned browser runner
+uses pinned Playwright Core to click Review Firewall, Approve Once, Reset, and
+Try Approval Bypass; asserts API and rendered state; records browser hygiene;
+captures three alias-only screenshots; and proves exact cleanup.
 
-No API/GUI change, model call, AWS mutation, IAM widening, deployment, RAG, or
-new dependency/resource is approved.
+No new product feature, agent-intent UI integration, model call, AWS mutation,
+IAM widening, deployment, RAG, or cloud resource is approved. Playwright Core
+is the single development-only dependency approved for browser evidence.
 
 ## Phase 2 boundary
 

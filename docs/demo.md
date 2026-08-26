@@ -102,6 +102,9 @@ Real AWS mutation remains deliberately disabled.
 The POC is intentionally small: one target, one rule, one proposed change, and
 one approval story.
 
+Every visible proof below was created by automated browser clicks and checked
+against both the service response and the screen before capture.
+
 <!-- Speaker note: These are reusable control ideas, not an enterprise platform. The value is proving the pattern before expanding integrations or permissions. -->
 
 ---
@@ -135,7 +138,7 @@ demo does not call it yet, so no screenshot is claimed for this feature.
 # Proof 1: Sensitive change pauses
 
 **DEMO-PROVEN:** AgentGuard recommends `COUNT -> BLOCK`, performs no mutation,
-and waits for a human decision.
+and waits for a human decision. The proof runner clicked **Review Firewall**.
 
 ![AgentGuard shows approval required before a sensitive action](demo-proof/proposal.png)
 
@@ -146,7 +149,8 @@ and waits for a human decision.
 # Proof 2: Exact approval permits one action
 
 **DEMO-PROVEN:** One matching approval allows the synthetic change, verifies
-the result, and records the audit outcome.
+the result, and records the audit outcome. The proof runner clicked
+**Approve Once**.
 
 ![AgentGuard allows and verifies the exact approved synthetic action](demo-proof/approval-valid.png)
 
@@ -157,7 +161,8 @@ the result, and records the audit outcome.
 # Proof 3: Approval bypass is denied
 
 **DEMO-PROVEN:** Without matching human approval, AgentGuard denies the request
-and leaves the rule unchanged.
+and leaves the rule unchanged. The proof runner clicked
+**Try Approval Bypass**.
 
 ![AgentGuard denies an attempted approval bypass](demo-proof/bypass-denied.png)
 
@@ -172,6 +177,7 @@ and leaves the rule unchanged.
 - AI can accelerate findings and recommendations.
 - Deterministic policy can constrain sensitive actions.
 - Human approval can remain explicit and auditable.
+- Repeatable browser evidence can prove the manager journey without manual clicking.
 - The same pattern can support security, compliance, and operations POCs.
 
 ## Honest boundary
