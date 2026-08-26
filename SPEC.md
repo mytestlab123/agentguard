@@ -1,5 +1,18 @@
 # Specification
 
+## Active approved scope
+
+GitHub issue #4 defines the later AgentGuard v1 scope and supersedes the Phase
+0 wait gate for this bounded work. The first slice is synthetic and local only:
+an exact typed WAF COUNT-to-BLOCK proposal, deterministic policy, one-time
+human approval, drift checks, synthetic execution, verification, and audit.
+
+The model, browser integration, AWS adapter, deployment, and any real WAF
+mutation remain outside this first slice. Cloud use still requires separate
+approval for the exact experiment.
+
+The original RAG specification below is retained as repository history.
+
 ## Scope
 
 Build small, understandable local experiments that explain secure RAG and
