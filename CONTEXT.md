@@ -1,26 +1,27 @@
 # Context
 
-Updated: 2026-08-26
+Updated: 2026-08-27
 
 ## Current AgentGuard truth
 
 - PR #5 was squash-merged into `main` at `76ac721`.
 - Issue #4 is complete and closed.
+- PR #7 is merged and Issue #6 is complete and closed.
 - The repository now has a working local deterministic policy core, synthetic
   WAF adapter, React Decision Panel, and local-only Python API.
 - Existing local behavior covers `ALLOW / DENY / APPROVAL REQUIRED`, exact
   approval, rejection, replay/drift denial, synthetic verification, audit, and
   approval-bypass denial.
-- Validation reported after the merge: 17 Python tests, 3 frontend tests, and
+- Current validation passes 26 Python tests, 3 frontend tests, and
   a successful Vite build.
 
 ## Phase 2 result
 
-GitHub Issue #6 is implemented in draft PR #7:
+GitHub Issue #6 was completed in merged PR #7:
 
 > Connect exactly one real disposable AWS WAF target through a read-only path.
 
-- Draft PR #7 adds a narrow `GetWebACL` reader, runtime-only exact target
+- PR #7 added a narrow `GetWebACL` reader, runtime-only exact target
   configuration, alias-only output, stable safe errors, live API/UI mode,
   mocked tests, and a repo-owned live proof command.
 - Canonical local validation passes 26 Python tests, three frontend tests, and
@@ -37,8 +38,10 @@ GitHub Issue #6 is implemented in draft PR #7:
 
 ## Current gate
 
-Review draft PR #7. No Phase 3 mutation work, IAM widening, or new AWS resource
-is approved.
+Issue #8 adds one KISS synthetic browser E2E runner. It must use free loopback
+ports, write screenshots outside Git, clean up only owned processes, and make
+no AWS call. No Phase 3 mutation work, IAM widening, or new AWS resource is
+approved.
 
 ## Phase 2 boundary
 
@@ -61,10 +64,9 @@ Not allowed in Phase 2:
 
 ## Later phases
 
-Only after Issue #6 is complete and reviewed should AgentGuard consider the
-first real guarded WAF mutation using exact proposal validation, one-time human
-approval, AWS LockToken, narrow IAM, reread, and Before -> Action -> After
-verification.
+A later separately approved Issue may consider the first real guarded WAF
+mutation using exact proposal validation, one-time human approval, AWS
+LockToken, narrow IAM, reread, and Before -> Action -> After verification.
 
 RAG/memory poisoning remains a future AgentGuard regression scenario, not an
 active standalone implementation track.

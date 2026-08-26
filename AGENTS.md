@@ -10,23 +10,23 @@ The core rule is:
 > AI may investigate and propose. Deterministic policy, human approval, and
 > narrow AWS authority decide what can actually happen.
 
-## Active scope
+## Current POC scope
 
-GitHub Issue #6 is the approved next implementation scope:
+GitHub Issue #8 is the approved local browser E2E scope:
 
-- connect exactly one disposable AWS WAF WebACL through a read-only adapter;
-- read and sanitize the selected rule configuration;
-- confirm the intended `COUNT` state;
-- produce the existing typed `COUNT -> BLOCK` proposal;
-- show `LIVE AWS - READ ONLY` in the browser;
-- preserve the existing deterministic approval, replay, drift, bypass, and
-  audit behavior.
+- start the existing synthetic API and frontend on explicit free loopback ports;
+- assert the proposal and approval-bypass states through documented API routes;
+- capture two browser screenshots outside Git;
+- clean up only the processes and temporary profile created by the runner.
 
-**Phase 2 must not mutate AWS.**
+This is a local POC. It must not call or mutate AWS.
 
 ## Working rules
 
-- Keep each change small and tied to Issue #6 acceptance criteria.
+- Follow KISS: build the smallest POC that proves one learning objective; do
+  not turn AgentGuard into an enterprise platform.
+- Keep each change small and tied to the active Issue acceptance criteria.
+- Prefer one repo-owned script over a new framework or dependency.
 - Preserve synthetic mode and mocked AWS tests.
 - Prefer deterministic contracts and policy checks around probabilistic or
   external components.
@@ -37,7 +37,10 @@ GitHub Issue #6 is the approved next implementation scope:
 
 ## Hard stops
 
-- Do not add `wafv2:UpdateWebACL` or any other AWS mutation call in Phase 2.
+- Do not stop unrelated local listeners; use another verified free port.
+- Do not commit screenshots, runtime logs, browser profiles, or E2E evidence.
+- Do not add `wafv2:UpdateWebACL` or any other AWS mutation call unless a later
+  exact mutation experiment is separately approved.
 - Do not require mutation IAM permissions.
 - Do not commit AWS account IDs, ARNs, WebACL IDs, credentials, tokens, `.env`
   values, private documents, internal material, or raw operational logs.
@@ -48,13 +51,12 @@ GitHub Issue #6 is the approved next implementation scope:
 
 ## Validation
 
-For Phase 2, retain all existing checks and add mocked tests proving:
+Retain the existing policy and read-only AWS tests. For the browser runner,
+prove:
 
-1. a `GetWebACL` response maps to sanitized aliases;
-2. the exact COUNT rule produces the existing proposal;
-3. missing, ambiguous, or unexpected configuration fails closed;
-4. unrelated targets cannot be selected;
-5. raw AWS exceptions/identifiers are not exposed;
-6. live read mode cannot call a mutation API.
+1. proposal JSON is `APPROVAL_REQUIRED`, `COUNT -> BLOCK`, mutation false;
+2. bypass JSON is `DENY / HUMAN_APPROVAL_REQUIRED`, mutation false;
+3. two distinct nonempty screenshots are produced outside Git;
+4. owned listeners and the temporary browser profile are cleaned up.
 
 Before every public push, perform a public-safety diff review.

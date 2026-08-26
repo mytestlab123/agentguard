@@ -16,10 +16,19 @@ cleanup() {
 trap cleanup EXIT INT TERM
 
 requested_port="${AGENTGUARD_API_PORT:-0}"
+frontend_port="${AGENTGUARD_FRONTEND_PORT:-5173}"
+if [[ ! "${frontend_port}" =~ ^[0-9]+$ ]] ||
+  ((frontend_port < 1024 || frontend_port > 65535)); then
+  printf '%s\n' 'ERROR: AGENTGUARD_FRONTEND_PORT must be between 1024 and 65535' >&2
+  exit 2
+fi
 python3 -m agentguard.api --port "${requested_port}" --ready-file "${ready_file}" &
 api_pid=$!
 api_port="$(python3 -m agentguard.wait_api --ready-file "${ready_file}")"
 export AGENTGUARD_API_PORT="${api_port}"
 printf 'AgentGuard Vite proxy using local API port %s\n' "${api_port}"
 
-npm --prefix "${repo_root}/frontend" run dev
+npm --prefix "${repo_root}/frontend" run dev -- \
+  --host 127.0.0.1 \
+  --port "${frontend_port}" \
+  --strictPort
