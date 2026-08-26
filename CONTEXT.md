@@ -4,39 +4,52 @@ Updated: 2026-08-26
 
 ## Current AgentGuard truth
 
-- PR #5 defines the v1 browser UX and upstream WAF Analyst reuse strategy.
-- Issue #4 is the approved active implementation scope.
-- Branch `feat/agentguard-v1-policy-core` starts with a local deterministic
-  policy core, synthetic WAF adapter, synthetic React Decision Panel, and a
-  local-only HTTP API connecting the browser to the Python authority.
-- No model, AWS adapter, credential, cloud resource, dependency, or billable
-  API has been added or used.
-- Local browser acceptance now passes for approved execution, human rejection,
-  and approval-bypass denial.
+- PR #5 was squash-merged into `main` at `76ac721`.
+- Issue #4 is complete and closed.
+- The repository now has a working local deterministic policy core, synthetic
+  WAF adapter, React Decision Panel, and local-only Python API.
+- Existing local behavior covers `ALLOW / DENY / APPROVAL REQUIRED`, exact
+  approval, rejection, replay/drift denial, synthetic verification, audit, and
+  approval-bypass denial.
+- Validation reported after the merge: 17 Python tests, 3 frontend tests, and
+  a successful Vite build.
 
-## Scope boundary
+## Active next scope
 
-Keep data synthetic and local until the exact AWS lab experiment is separately
-approved.
+GitHub Issue #6 is the next implementation gate:
 
-## Historical RAG Phase 0 context
+> Connect exactly one real disposable AWS WAF target through a read-only path.
 
-Updated: 2026-08-20
+The browser should show `LIVE AWS - READ ONLY`, read the configured WebACL,
+sanitize it to public-safe aliases, confirm the selected rule is in `COUNT`,
+and feed that evidence into the existing typed `COUNT -> BLOCK` proposal and
+deterministic policy flow.
 
-## Current truth
+## Phase 2 boundary
 
-- Phase 0 bootstrap is complete.
-- The repository contains documentation and empty source/data/test locations.
-- No dependencies are installed or declared.
-- No model, API, cloud resource, credential, or real data has been used.
+Allowed:
 
-## Historical next gate
+- AWS WAF read-only access needed for the exact configured lab WebACL;
+- mocked AWS clients in tests;
+- runtime-only mapping from real identifiers to safe aliases;
+- current synthetic mode and local policy/API/frontend behavior.
 
-Wait until the secure-agent harness lab reaches its first owner learning gate.
-Then select one small, synthetic-only RAG learning objective before writing
-implementation code.
+Not allowed in Phase 2:
 
-## Stop conditions
+- `UpdateWebACL` or any other AWS mutation;
+- mutation IAM permissions;
+- arbitrary AWS resource selection from browser/model input;
+- committing real AWS account IDs, ARNs, WebACL IDs, credentials, tokens, or
+  raw operational data;
+- Bedrock/AgentCore model integration;
+- new paid/cloud architecture unrelated to the one read-only WAF proof.
 
-Stop for owner approval before paid API use, cloud access or mutation, external
-publication, credential handling, or use of anything other than synthetic data.
+## Later phases
+
+Only after Issue #6 is complete and reviewed should AgentGuard consider the
+first real guarded WAF mutation using exact proposal validation, one-time human
+approval, AWS LockToken, narrow IAM, reread, and Before -> Action -> After
+verification.
+
+RAG/memory poisoning remains a future AgentGuard regression scenario, not an
+active standalone implementation track.
