@@ -95,6 +95,21 @@ Run the local browser demo with:
 ./scripts/run-local.sh
 ```
 
+Use `AGENTGUARD_API_PORT` and `AGENTGUARD_FRONTEND_PORT` to request explicit
+free ports. The runner fails instead of stopping an existing listener.
+
+Run the agent-owned synthetic browser proof with:
+
+```bash
+./scripts/browser-e2e.sh
+```
+
+It starts the API and frontend on separate free loopback ports, asserts the
+proposal and approval-bypass JSON, captures two screenshots with installed
+Chrome, and cleans up its own processes. Evidence is written outside Git under
+`~/.AGENTS-temp/agentguard/browser-e2e/` by default. This is intentionally a
+small POC runner, not an enterprise browser-testing framework.
+
 ## Live AWS read-only proof
 
 Set these real values only in the server process environment or another ignored

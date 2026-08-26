@@ -91,6 +91,18 @@
 - Next: final public-safety diff review, then a focused commit only with owner
   approval.
 
+## 2026-08-27 - Repo-owned browser E2E runner
+
+- Objective: replace manual local startup, API state setup, and screenshot
+  capture with one repeatable agent-run command.
+- Built: explicit free-port selection, bounded readiness, proposal and bypass
+  JSON assertions, two headless-Chrome screenshots, and exact owned-process and
+  temporary-profile cleanup.
+- KISS choice: reused Bash, curl, jq, Vite, and installed Chrome instead of
+  adding a browser-testing framework or application dependency.
+- Safety: synthetic mode only, loopback listeners only, evidence outside Git,
+  no AWS call, and no stopping unrelated local applications.
+
 ## 2026-08-26 - Phase 2 read-only WAF boundary
 
 - Objective: replace only the synthetic read evidence with one exact real AWS
