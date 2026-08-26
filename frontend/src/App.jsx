@@ -21,6 +21,10 @@ function display(value) {
 
 function DecisionPanel({ state, onAction, busy }) {
   const decisionClass = state.decision.toLowerCase().replaceAll('_', '-');
+  const labels = {
+    ...timelineLabels,
+    action: state.actionLabel || timelineLabels.action,
+  };
   return (
     <aside className="decision-panel" aria-label="AgentGuard decision">
       <div className="panel-kicker">AgentGuard decision</div>
@@ -30,7 +34,7 @@ function DecisionPanel({ state, onAction, busy }) {
       <div className="fact-grid">
         <div><span>Risk</span><strong className={`risk ${state.risk.toLowerCase()}`}>{state.risk}</strong></div>
         <div><span>Target</span><strong>{state.target}</strong></div>
-        <div><span>Rule</span><strong>{state.rule}</strong></div>
+        <div><span>{state.ruleLabel || 'Rule'}</span><strong>{state.rule}</strong></div>
         <div><span>Proposal</span><strong>{state.proposal}</strong></div>
       </div>
 
@@ -46,7 +50,7 @@ function DecisionPanel({ state, onAction, busy }) {
         {Object.entries(state.steps).map(([key, status]) => (
           <li key={key} className={status}>
             <span className="step-marker" aria-hidden="true" />
-            <span>{timelineLabels[key]}</span>
+            <span>{labels[key]}</span>
             <small>{status}</small>
           </li>
         ))}
@@ -74,6 +78,30 @@ function DecisionPanel({ state, onAction, busy }) {
         <span>Audit: <strong>{state.audit}</strong></span>
       </div>
     </aside>
+  );
+}
+
+function ComplianceFindings({ findings }) {
+  if (!findings?.length) return null;
+  return (
+    <section className="compliance-findings" aria-label="S3 compliance findings">
+      <div className="section-label">Two-control S3 compliance plan</div>
+      {findings.map((finding) => (
+        <article className="finding-row" key={finding.control}>
+          <div>
+            <strong>{finding.control}</strong>
+            <code>{finding.remediation}</code>
+          </div>
+          <div className="finding-state">
+            <span>{finding.before}</span>
+            <span aria-hidden="true">-&gt;</span>
+            <strong className={finding.actual === 'COMPLIANT' ? 'compliant' : ''}>
+              {finding.actual}
+            </strong>
+          </div>
+        </article>
+      ))}
+    </section>
   );
 }
 
@@ -133,8 +161,8 @@ export default function App() {
         <header className="app-header">
           <div className="brand-mark">AG</div>
           <div>
-            <h1>AgentGuard</h1>
-            <p>Trust boundary for sensitive agent actions</p>
+            <h1>{state.brandLabel || 'AgentGuard'}</h1>
+            <p>{state.brandDescription || 'Trust boundary for sensitive agent actions'}</p>
           </div>
           <div className="environment-pill">{state.environmentLabel}</div>
         </header>
@@ -152,12 +180,13 @@ export default function App() {
               <p>{message.text}</p>
             </article>
           ))}
+          <ComplianceFindings findings={state.findings} />
           <ToolActivity tools={state.tools} />
         </div>
 
         <footer className="control-bar">
           <button disabled={busy} className="primary" onClick={() => onAction('RUN_REVIEW')}>
-            Review Firewall
+            {state.primaryActionLabel || 'Review Firewall'}
           </button>
           <button disabled={busy} className="danger" onClick={() => onAction('TRY_BYPASS')}>
             Try Approval Bypass
@@ -165,7 +194,7 @@ export default function App() {
           <button disabled={busy} className="secondary" onClick={() => onAction('RESET')}>
             Reset
           </button>
-          <p>Demo target: LAB_WAF_01 / LAB_AdminPathProtection</p>
+          <p>Demo target: {state.demoTargetLabel || 'LAB_WAF_01 / LAB_AdminPathProtection'}</p>
         </footer>
       </section>
 

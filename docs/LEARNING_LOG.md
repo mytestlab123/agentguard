@@ -168,3 +168,24 @@
   resource or write authority remains.
 - Limits: Phase 3 mutation, LockToken execution, write IAM, model integration,
   deployment, and multi-target support remain unapproved.
+
+## 2026-08-27 - Two-control Compliance Guard demo
+
+- Objective: prove the AgentGuard approval pattern for one synthetic S3 bucket
+  and exactly two compliance controls.
+- Built: server-owned TLS-only and public-read control mappings, one immutable
+  two-control proposal, one-time approval, local modeled remediations, rescan,
+  verification, audit, and approval-bypass denial.
+- Evidence: 37 Python tests, three frontend tests, a Vite production build,
+  and both Compliance Guard and original WAF Playwright journeys pass.
+- Browser proof: proposal shows two `NON_COMPLIANT` findings and no mutation;
+  valid approval verifies two `COMPLIANT` results; bypass is denied with both
+  findings unchanged. Browser and network error counts are zero and cleanup is
+  complete.
+- Management artifact: `docs/demo-compliance.md` tells the nine-slide
+  Compliance Guard story with three visually inspected synthetic screenshots.
+- Safety: the browser supplies no bucket, control, runbook, parameter, or
+  approval identity. No AWS call, S3 write, Config evaluation, SSM execution,
+  IAM change, model call, or dependency was added.
+- Limits: real AWS compliance reads, real remediation, multi-account scale,
+  and the wider S3 control catalogue remain not proven and deferred.

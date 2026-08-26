@@ -3,13 +3,35 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-const [, , appUrl, chromePath, evidenceDir, playwrightEntry] = process.argv;
+const [, , appUrl, chromePath, evidenceDir, playwrightEntry, story = 'waf'] = process.argv;
 
 if (!appUrl || !chromePath || !evidenceDir || !playwrightEntry) {
   throw new Error(
     'usage: browser-e2e.mjs <app-url> <chrome-path> <evidence-dir> <playwright-entry>',
   );
 }
+if (!['waf', 'compliance'].includes(story)) {
+  throw new Error('story must be waf or compliance');
+}
+
+const compliance = story === 'compliance';
+const journey = compliance
+  ? {
+      heading: 'Compliance Guard',
+      reviewButton: 'Scan S3 Compliance',
+      before: '2 NON_COMPLIANT',
+      requested: '2 COMPLIANT',
+      afterApproval: '2 COMPLIANT',
+      afterBypass: '2 NON_COMPLIANT',
+    }
+  : {
+      heading: 'AgentGuard',
+      reviewButton: 'Review Firewall',
+      before: 'COUNT',
+      requested: 'BLOCK',
+      afterApproval: 'BLOCK',
+      afterBypass: 'COUNT',
+    };
 
 const { chromium } = await import(pathToFileURL(playwrightEntry).href);
 
@@ -45,6 +67,19 @@ async function clickAndAssert(page, spec) {
   const payload = await response.json();
   for (const [key, expected] of Object.entries(spec.api)) {
     assert.deepEqual(payload[key], expected, `${spec.endpoint} field ${key}`);
+  }
+  if (compliance) {
+    assert.equal(payload.findings.length, 2, `${spec.endpoint} finding count`);
+    assert.deepEqual(
+      payload.findings.map((finding) => finding.control),
+      ['S3_BUCKET_SSL_REQUESTS_ONLY', 'S3_BUCKET_PUBLIC_READ_PROHIBITED'],
+      `${spec.endpoint} exact controls`,
+    );
+    assert.deepEqual(
+      payload.findings.map((finding) => finding.actual),
+      spec.findingStatuses,
+      `${spec.endpoint} finding statuses`,
+    );
   }
 
   await fs.writeFile(
@@ -96,10 +131,10 @@ try {
 
   const initialResponse = await page.goto(appUrl, { waitUntil: 'domcontentloaded' });
   assert.ok(initialResponse?.ok(), `application returned ${initialResponse?.status()}`);
-  await page.getByRole('heading', { name: 'AgentGuard' }).waitFor();
+  await page.getByRole('heading', { name: journey.heading }).waitFor();
 
   await clickAndAssert(page, {
-    button: 'Review Firewall',
+    button: journey.reviewButton,
     endpoint: '/api/review',
     badge: 'APPROVAL REQUIRED',
     reason: 'HUMAN_APPROVAL_REQUIRED',
@@ -108,11 +143,13 @@ try {
     api: {
       decision: 'APPROVAL_REQUIRED',
       reason: 'HUMAN_APPROVAL_REQUIRED',
-      beforeAction: 'COUNT',
-      requestedAction: 'BLOCK',
-      actualAction: 'COUNT',
+      story,
+      beforeAction: journey.before,
+      requestedAction: journey.requested,
+      actualAction: journey.before,
       mutationPerformed: false,
     },
+    findingStatuses: compliance ? ['NON_COMPLIANT', 'NON_COMPLIANT'] : undefined,
   });
 
   await clickAndAssert(page, {
@@ -125,13 +162,15 @@ try {
     api: {
       decision: 'ALLOW',
       reason: 'APPROVAL_VALID',
-      beforeAction: 'COUNT',
-      requestedAction: 'BLOCK',
-      actualAction: 'BLOCK',
+      story,
+      beforeAction: journey.before,
+      requestedAction: journey.requested,
+      actualAction: journey.afterApproval,
       mutationPerformed: true,
       verified: true,
       audit: 'RECORDED',
     },
+    findingStatuses: compliance ? ['COMPLIANT', 'COMPLIANT'] : undefined,
   });
 
   const resetResponsePromise = page.waitForResponse((response) => {
@@ -152,12 +191,14 @@ try {
     api: {
       decision: 'DENY',
       reason: 'HUMAN_APPROVAL_REQUIRED',
-      beforeAction: 'COUNT',
-      requestedAction: 'BLOCK',
-      actualAction: 'COUNT',
+      story,
+      beforeAction: journey.before,
+      requestedAction: journey.requested,
+      actualAction: journey.afterBypass,
       mutationPerformed: false,
       verified: false,
     },
+    findingStatuses: compliance ? ['NON_COMPLIANT', 'NON_COMPLIANT'] : undefined,
   });
 
   assert.deepEqual(pageErrors, [], 'browser page errors');
@@ -169,9 +210,10 @@ try {
       ? 'PASS'
       : 'PASS_WITH_BROWSER_WARNINGS',
     evidenceMode: 'INTERACTIVE_PLAYWRIGHT',
+    story,
     browser: await browser.version(),
     viewport: '1920x1080',
-    uiActions: ['Review Firewall', 'Approve Once', 'Reset', 'Try Approval Bypass'],
+    uiActions: [journey.reviewButton, 'Approve Once', 'Reset', 'Try Approval Bypass'],
     apiAssertions: ['proposal', 'approval-valid', 'bypass-denied'],
     domAssertions: ['decision badge', 'reason code'],
     consoleErrors,

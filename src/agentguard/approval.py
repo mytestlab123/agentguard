@@ -5,8 +5,18 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime
 import secrets
+from typing import Protocol
 
-from .contracts import Decision, PolicyDecision, Reason, WafChangeProposal
+from .contracts import Decision, PolicyDecision, Reason
+
+
+class ApprovableProposal(Protocol):
+    proposal_id: str
+    version: int
+    expires_at: datetime
+
+    @property
+    def proposal_hash(self) -> str: ...
 
 
 @dataclass(frozen=True, slots=True)
@@ -32,7 +42,7 @@ class ApprovalRegistry:
 
     def approve_once(
         self,
-        proposal: WafChangeProposal,
+        proposal: ApprovableProposal,
         *,
         approval_id: str | None = None,
         expires_at: datetime | None = None,
@@ -52,13 +62,13 @@ class ApprovalRegistry:
         self._records[token.approval_id] = _ApprovalRecord(token=token)
         return token
 
-    def reject(self, proposal: WafChangeProposal) -> PolicyDecision:
+    def reject(self, proposal: ApprovableProposal) -> PolicyDecision:
         return PolicyDecision(Decision.DENY, Reason.HUMAN_REJECTED)
 
     def consume(
         self,
         token: ApprovalToken,
-        proposal: WafChangeProposal,
+        proposal: ApprovableProposal,
         *,
         now: datetime,
     ) -> PolicyDecision:
