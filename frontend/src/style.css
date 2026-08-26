@@ -42,6 +42,15 @@ button:disabled { cursor: wait; opacity: 0.55; transform: none !important; }
 .message p { margin: 0; line-height: 1.55; }
 
 .tool-activity { max-width: 760px; padding: 1rem; border: 1px solid var(--border); border-radius: 14px; background: #09131d; }
+.compliance-findings { max-width: 920px; padding: 1rem; border: 1px solid #2e5c61; border-radius: 14px; background: #091a22; }
+.finding-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 1rem; align-items: center; padding: 0.8rem 0; border-bottom: 1px solid var(--border); }
+.finding-row:last-child { border-bottom: 0; padding-bottom: 0; }
+.finding-row strong, .finding-row code { display: block; }
+.finding-row strong { font-size: 0.8rem; }
+.finding-row code { margin-top: 0.35rem; color: var(--muted); font-size: 0.68rem; overflow-wrap: anywhere; }
+.finding-state { display: flex; gap: 0.55rem; align-items: center; color: var(--muted); font-size: 0.7rem; }
+.finding-state strong { color: var(--red); }
+.finding-state strong.compliant { color: var(--green); }
 .section-label, .panel-kicker { color: var(--muted); font-size: 0.68rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; }
 .tool-row { display: grid; grid-template-columns: 10px minmax(150px, auto) 1fr; gap: 0.65rem; align-items: center; margin-top: 0.65rem; color: var(--muted); font-size: 0.78rem; }
 .tool-row code { color: #c8e8ff; }
@@ -102,4 +111,5 @@ button:disabled { cursor: wait; opacity: 0.55; transform: none !important; }
   .control-bar button { flex: 1 1 45%; }
   .decision-panel { padding: 1rem; }
   .fact-grid { grid-template-columns: 1fr; }
+  .finding-row { grid-template-columns: 1fr; }
 }

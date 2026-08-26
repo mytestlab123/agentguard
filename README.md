@@ -24,6 +24,8 @@ The local visual proof and Phase 2 real AWS read-only proof are complete:
 - repo-owned offline proof of proposal, exact approval, and bypass denial.
 - tested local boundary for future untrusted intent before trusted proposal
   construction.
+- local Compliance Guard mode for one synthetic S3 bucket and exactly two
+  server-owned control-to-remediation mappings.
 
 The implementation keeps synthetic mode for tests and supports one exact live
 read target. It has no AWS mutation adapter or write IAM requirement.
@@ -107,6 +109,16 @@ Run the agent-owned synthetic browser proof with:
 ./scripts/browser-e2e.sh
 ```
 
+Run the Compliance Guard browser demo and proof with:
+
+```bash
+AGENTGUARD_DEMO=compliance ./scripts/run-local.sh
+AGENTGUARD_E2E_DEMO=compliance ./scripts/browser-e2e.sh
+```
+
+Compliance mode models exactly two S3 controls locally. It makes no AWS call
+and does not execute either named SSM Automation remediation.
+
 It starts the API and frontend on separate free loopback ports, then uses the
 pinned Playwright Core development dependency with installed Chrome. The
 browser clicks Review Firewall, Approve Once, Reset, and Try Approval Bypass;
@@ -121,6 +133,8 @@ runner, not an enterprise browser-testing framework.
 If the local application cannot be started, use the accepted sanitized proof:
 
 - management presentation: [`docs/demo.md`](docs/demo.md);
+- Compliance Guard presentation:
+  [`docs/demo-compliance.md`](docs/demo-compliance.md);
 - technical test report: [`docs/demo-proof/report.md`](docs/demo-proof/report.md);
 - compact three-state snapshot: [`docs/demo-proof/output.md`](docs/demo-proof/output.md).
 

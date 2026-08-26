@@ -148,6 +148,10 @@ require_command setsid
 require_command realpath
 require_command install
 
+demo_story="${AGENTGUARD_E2E_DEMO:-waf}"
+[[ "$demo_story" == "waf" || "$demo_story" == "compliance" ]] || \
+  fail "AGENTGUARD_E2E_DEMO must be waf or compliance"
+
 evidence_root="$(realpath -m "$evidence_root")"
 case "$evidence_root" in
   "$repo_root"|"$repo_root"/*) fail "evidence directory must be outside the repository" ;;
@@ -198,6 +202,7 @@ printf 'Evidence: %s\n' "$run_dir"
 
 setsid env \
   AGENTGUARD_MODE=synthetic \
+  AGENTGUARD_DEMO="$demo_story" \
   AGENTGUARD_API_PORT="$api_port" \
   AGENTGUARD_FRONTEND_PORT="$frontend_port" \
   "$repo_root/scripts/run-local.sh" >"$run_dir/services.log" 2>&1 &
@@ -211,11 +216,13 @@ wait_for_url "$app_url/"
   "$app_url" \
   "$chrome_arg" \
   "$evidence_arg" \
-  "$playwright_arg" >"$run_dir/playwright.log" 2>&1
+  "$playwright_arg" \
+  "$demo_story" >"$run_dir/playwright.log" 2>&1
 
-jq -e '
+jq -e --arg story "$demo_story" '
   (.result | startswith("PASS")) and
   .evidenceMode == "INTERACTIVE_PLAYWRIGHT" and
+  .story == $story and
   (.uiActions | length) == 4 and
   (.apiAssertions | length) == 3 and
   (.domAssertions | length) == 2 and
@@ -254,7 +261,7 @@ mv "$run_dir/result.tmp" "$run_dir/result.json"
 
 {
   printf 'RESULT=%s\n' "$result"
-  printf 'MODE=synthetic\n'
+  printf 'MODE=synthetic-%s\n' "$demo_story"
   printf 'EVIDENCE_MODE=INTERACTIVE_PLAYWRIGHT\n'
   printf 'PLAYWRIGHT_CORE=PINNED_REPO_DEPENDENCY\n'
   printf 'UI_ACTIONS=4\n'
@@ -265,9 +272,15 @@ mv "$run_dir/result.tmp" "$run_dir/result.json"
   printf 'PAGE_ERRORS=0\n'
   printf 'REQUEST_FAILURES=0\n'
   printf 'EXTERNAL_REQUESTS=0\n'
-  printf 'PROPOSAL=APPROVAL_REQUIRED COUNT_TO_BLOCK MUTATION_FALSE\n'
-  printf 'APPROVAL=ALLOW APPROVAL_VALID COUNT_TO_BLOCK MUTATION_TRUE VERIFIED_TRUE\n'
-  printf 'BYPASS=DENY HUMAN_APPROVAL_REQUIRED MUTATION_FALSE\n'
+  if [[ "$demo_story" == "compliance" ]]; then
+    printf 'PROPOSAL=APPROVAL_REQUIRED TWO_NON_COMPLIANT MUTATION_FALSE\n'
+    printf 'APPROVAL=ALLOW APPROVAL_VALID TWO_COMPLIANT MUTATION_TRUE VERIFIED_TRUE\n'
+    printf 'BYPASS=DENY HUMAN_APPROVAL_REQUIRED MUTATION_FALSE\n'
+  else
+    printf 'PROPOSAL=APPROVAL_REQUIRED COUNT_TO_BLOCK MUTATION_FALSE\n'
+    printf 'APPROVAL=ALLOW APPROVAL_VALID COUNT_TO_BLOCK MUTATION_TRUE VERIFIED_TRUE\n'
+    printf 'BYPASS=DENY HUMAN_APPROVAL_REQUIRED MUTATION_FALSE\n'
+  fi
   printf 'CLEANUP=BROWSER_CLOSED SERVICES_STOPPED PORTS_RELEASED TEMPORARY_FILES_REMOVED\n'
 } >"$run_dir/result.txt"
 

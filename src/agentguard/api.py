@@ -15,6 +15,7 @@ from typing import Callable
 from urllib.parse import urlsplit
 
 from .approval import ApprovalToken
+from .compliance import ComplianceActionError, ComplianceDemoController
 from .contracts import Decision, MutationResult, PolicyDecision, Reason
 from .fixtures import SyntheticLane, build_lane_from_state, build_synthetic_lane
 from .waf_reader import WafReadError, WafReader, build_aws_waf_reader_from_env
@@ -366,6 +367,7 @@ class DemoController:
     def _environment_fields(self) -> dict[str, object]:
         if self._live_read_only:
             return {
+                "story": "waf",
                 "environment": "live-readonly",
                 "environmentLabel": "LIVE AWS - READ ONLY",
                 "environmentDescription": (
@@ -374,6 +376,7 @@ class DemoController:
                 "liveReadOnly": True,
             }
         return {
+            "story": "waf",
             "environment": "synthetic",
             "environmentLabel": "LOCAL SYNTHETIC DEMO",
             "environmentDescription": (
@@ -383,7 +386,9 @@ class DemoController:
         }
 
 
-def make_handler(controller: DemoController) -> type[BaseHTTPRequestHandler]:
+def make_handler(
+    controller: DemoController | ComplianceDemoController,
+) -> type[BaseHTTPRequestHandler]:
     class AgentGuardHandler(BaseHTTPRequestHandler):
         server_version = "AgentGuardLocal"
 
@@ -417,7 +422,7 @@ def make_handler(controller: DemoController) -> type[BaseHTTPRequestHandler]:
             except WafReadError as error:
                 self._send_json(HTTPStatus.BAD_GATEWAY, {"error": error.reason})
                 return
-            except DemoActionError as error:
+            except (DemoActionError, ComplianceActionError) as error:
                 self._send_json(HTTPStatus.CONFLICT, {"error": error.reason})
                 return
             except Exception:
@@ -482,6 +487,11 @@ def main() -> None:
         choices=("synthetic", "live-readonly"),
         default=os.environ.get("AGENTGUARD_MODE", "synthetic"),
     )
+    parser.add_argument(
+        "--demo",
+        choices=("waf", "compliance"),
+        default=os.environ.get("AGENTGUARD_DEMO", "waf"),
+    )
     args = parser.parse_args()
     if args.port != 0 and not 1024 <= args.port <= 65535:
         parser.error("port must be zero or between 1024 and 65535")
@@ -496,7 +506,13 @@ def main() -> None:
         )
     except WafReadError as error:
         parser.error(error.reason)
-    controller = DemoController(live_reader=live_reader)
+    if args.demo == "compliance" and live_reader is not None:
+        parser.error("compliance demo is local synthetic only")
+    controller = (
+        ComplianceDemoController()
+        if args.demo == "compliance"
+        else DemoController(live_reader=live_reader)
+    )
     server = ThreadingHTTPServer(("localhost", args.port), make_handler(controller))
     actual_port = server.server_port
     if args.ready_file is not None:

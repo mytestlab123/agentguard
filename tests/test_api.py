@@ -10,6 +10,7 @@ from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 from agentguard.api import DemoActionError, DemoController, make_handler
+from agentguard.compliance import ComplianceDemoController
 from agentguard.contracts import Action, Scope, WafRuleState
 from agentguard.waf_reader import WafReadError
 
@@ -197,6 +198,40 @@ class LiveHttpErrorContractTests(unittest.TestCase):
                 urlopen(request, timeout=2)
             self.assertEqual(context.exception.code, HTTPStatus.BAD_GATEWAY)
             self.assertEqual(json.load(context.exception), {"error": "WAF_READ_FAILED"})
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join(timeout=2)
+
+
+class ComplianceHttpContractTests(unittest.TestCase):
+    def test_health_and_review_expose_only_fixed_compliance_story(self) -> None:
+        controller = ComplianceDemoController(clock=lambda: NOW)
+        server = ThreadingHTTPServer(("localhost", 0), make_handler(controller))
+        thread = Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            health_request = Request(
+                f"http://localhost:{server.server_port}/api/health"
+            )
+            with urlopen(health_request, timeout=2) as response:
+                health = json.load(response)
+            review_request = Request(
+                f"http://localhost:{server.server_port}/api/review",
+                data=b"{}",
+                method="POST",
+                headers={
+                    "Content-Type": "application/json",
+                    "X-AgentGuard-Intent": "human-ui-v1",
+                },
+            )
+            with urlopen(review_request, timeout=2) as response:
+                reviewed = json.load(response)
+
+            self.assertEqual(health["mode"], "local-synthetic-compliance")
+            self.assertEqual(reviewed["story"], "compliance")
+            self.assertEqual(reviewed["target"], "LAB_BUCKET_01")
+            self.assertEqual(len(reviewed["findings"]), 2)
         finally:
             server.shutdown()
             server.server_close()

@@ -30,7 +30,12 @@ def wait_for_api(port: int, attempts: int) -> None:
                 payload = json.load(response)
             if (
                 payload.get("status") == "ok"
-                and payload.get("mode") in {"local-synthetic", "live-aws-read-only"}
+                and payload.get("mode")
+                in {
+                    "local-synthetic",
+                    "local-synthetic-compliance",
+                    "live-aws-read-only",
+                }
             ):
                 return
         except (OSError, URLError, ValueError, json.JSONDecodeError):
