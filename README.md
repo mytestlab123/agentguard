@@ -22,6 +22,8 @@ The local visual proof and Phase 2 real AWS read-only proof are complete:
 - alias-only live evidence and stable sanitized failures;
 - visible `LIVE AWS - READ ONLY` mode with live approval disabled.
 - repo-owned offline proof of proposal, exact approval, and bypass denial.
+- tested local boundary for future untrusted intent before trusted proposal
+  construction.
 
 The implementation keeps synthetic mode for tests and supports one exact live
 read target. It has no AWS mutation adapter or write IAM requirement.

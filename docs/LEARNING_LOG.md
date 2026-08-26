@@ -114,6 +114,20 @@
 - Safety: only visually inspected synthetic alias-only PNGs enter Git; raw JSON,
   logs, profiles, real identifiers, and AWS mutation remain excluded.
 
+## 2026-08-27 - Untrusted agent-intent proposal boundary
+
+- Objective: make the trust transition before proposal creation explicit
+  without adding a model or AWS call.
+- Built: an exact three-field intent parser and trusted proposal builder using
+  allowlisted observed state plus server-owned metadata.
+- Security regressions: authority-field injection, malformed schemas,
+  target/rule/action swaps, and invalid observed state fail closed with stable
+  reasons that do not echo payload values.
+- Evidence: five focused boundary tests pass; the generated proposal still
+  evaluates to `APPROVAL_REQUIRED / HUMAN_APPROVAL_REQUIRED`.
+- Limits: no API/GUI integration, model, AWS mutation, IAM, RAG, dependency, or
+  generalized target selection.
+
 ## 2026-08-26 - Phase 2 read-only WAF boundary
 
 - Objective: replace only the synthetic read evidence with one exact real AWS
