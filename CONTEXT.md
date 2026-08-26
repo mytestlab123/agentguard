@@ -8,13 +8,15 @@ Updated: 2026-08-27
 - Issue #4 is complete and closed.
 - PR #7 is merged and Issue #6 is complete and closed.
 - PR #9 is merged and Issue #8 is complete and closed.
+- PR #12 is merged and Issue #11 is complete and closed.
+- PR #14 is merged and Issue #13 is complete and closed.
 - The repository now has a working local deterministic policy core, synthetic
   WAF adapter, React Decision Panel, and local-only Python API.
 - Existing local behavior covers `ALLOW / DENY / APPROVAL REQUIRED`, exact
   approval, rejection, replay/drift denial, synthetic verification, audit, and
   approval-bypass denial.
-- Current validation passes 26 Python tests, 3 frontend tests, and
-  a successful Vite build.
+- Current validation passes 26 Python tests, three frontend tests, a successful
+  Vite build, and the three-state browser E2E proof.
 
 ## Phase 2 result
 
@@ -39,10 +41,12 @@ GitHub Issue #6 was completed in merged PR #7:
 
 ## Current gate
 
-Issue #11 adds one KISS sanitized offline demo proof. The browser runner must
-assert proposal, exact approval, and bypass states, while raw evidence stays
-outside Git. Only three visually inspected synthetic screenshots may be kept
-under `docs/demo-proof/`. No Phase 3 mutation work, IAM widening, or new AWS
+No next implementation milestone is selected. The accepted current truth is
+being packaged for the GitHub-only ChatGPT handoff. ChatGPT must select exactly
+one bounded next learning objective before Codex creates or implements another
+feature, unless Amit explicitly overrides that gate.
+
+No Phase 3 mutation work, IAM widening, model service, deployment, or new AWS
 resource is approved.
 
 ## Phase 2 boundary
