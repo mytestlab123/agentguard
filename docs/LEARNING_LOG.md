@@ -189,3 +189,29 @@
   IAM change, model call, or dependency was added.
 - Limits: real AWS compliance reads, real remediation, multi-account scale,
   and the wider S3 control catalogue remain not proven and deferred.
+
+## 2026-08-27 - Director-ready Compliance Guard presentation
+
+- Objective: make the management problem and governed solution understandable
+  before showing the current POC proof.
+- Story: nine high-contrast slides now cover the remediation gap, restrained
+  CISA/NSA and Verizon evidence, governed agentic assistance, the six-step
+  operating loop, proposal/approval/bypass proof, value, limitations, and one
+  direction decision.
+- Browser evidence: the Playwright Core runner retains three complete 1920 x
+  1080 captures and adds three real-browser 1200 x 900 presentation views after
+  API and DOM assertions. The original WAF journey still passes.
+- Native artifact: repo-owned Bash and PowerShell automation parses the
+  Markdown story, builds an editable nine-slide PPTX with speaker notes, reopens
+  it, checks 57 editable text shapes and three screenshot shapes, sanitizes
+  document metadata, and exports nine previews for visual inspection.
+- Validation: 37 Python tests, three frontend tests, the Vite build, both
+  browser journeys, native PPTX reopening, all six screenshot reviews, and all
+  nine slide-preview reviews pass.
+- Safety: synthetic aliases only; no AWS call, IAM, SSM execution, model call,
+  new package, account ID, ARN, private host, or Windows username entered the
+  public artifacts.
+- Limits: this remains a local synthetic management POC. Technical
+  requirements, design specification, live remediation, multi-account scale,
+  production deployment, savings, incident prevention, and 100 percent
+  compliance remain deferred or not proven.

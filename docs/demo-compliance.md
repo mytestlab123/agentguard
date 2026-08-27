@@ -2,44 +2,35 @@
 marp: true
 theme: default
 paginate: true
-backgroundColor: '#07111f'
-color: '#f4f7fb'
+backgroundColor: '#f7f9fc'
+color: '#132238'
 style: |
   section {
     font-family: Arial, Helvetica, sans-serif;
-    padding: 46px 60px;
+    padding: 54px 64px;
   }
   h1, h2 {
-    color: #5eead4;
+    color: #0f766e;
   }
   h1 {
-    font-size: 48px;
+    font-size: 50px;
   }
-  p, li, td, th {
-    font-size: 25px;
+  p, li {
+    font-size: 27px;
   }
   strong {
-    color: #67e8f9;
-  }
-  table {
-    width: 100%;
-  }
-  th {
-    background: #123047;
-  }
-  td {
-    background: #0b1d2b;
+    color: #0369a1;
   }
   img {
     display: block;
-    max-width: 86%;
-    max-height: 390px;
+    max-width: 82%;
+    max-height: 500px;
     object-fit: contain;
-    margin: 14px auto 0;
-    border: 1px solid #29465b;
+    margin: 12px auto 0;
+    border: 1px solid #cbd5e1;
   }
   footer {
-    color: #94a3b8;
+    color: #64748b;
   }
 ---
 
@@ -47,128 +38,139 @@ style: |
 
 ## Compliance Guard - powered by AgentGuard
 
-A small POC for faster cloud compliance without giving AI unchecked authority.
+Faster cloud compliance work without giving AI unchecked authority.
 
-**AI recommends. Policy constrains. People approve. Evidence verifies.**
+**Find faster. Approve safely. Verify every result.**
 
-<!-- Speaker note: This is a management story about safely scaling repetitive compliance work. It is not a production platform or a claim of autonomous compliance. -->
-
----
-
-# The management problem
-
-Cloud teams repeatedly check the same controls across many accounts and
-thousands of resources.
-
-| Today | Pressure | Needed direction |
-| --- | --- | --- |
-| Manual review | More cloud resources | Continuous scanning |
-| Repeated fixes | More compliance rules | Consistent remediation |
-| Fragmented proof | More audit questions | Clear evidence |
-| Human bottlenecks | AI works faster | Guarded approval |
-
-The opportunity is not simply more automation. It is **controlled, repeatable
-compliance work**.
-
-<!-- Speaker note: Repetition is where agentic assistance can create value, but only when authority and evidence remain explicit. -->
+<!-- Speaker note: This is a small proof of a governed operating pattern for cloud compliance. The question is whether AI can help teams move faster while authority, approval, and evidence remain controlled. -->
 
 ---
 
-# One simple compliance loop
+# The problem: a growing remediation gap
 
-## Scan -> Find -> Recommend -> Approve -> Remediate -> Rescan -> Verify
+Cloud compliance work grows with the environment. Repeated manual remediation
+does not scale at the same speed.
 
-| Step | POC result |
-| --- | --- |
-| Scan and find two control failures | **DEMO-PROVEN** |
-| Build one exact server-owned plan | **TEST + DEMO-PROVEN** |
-| Approve and model both remediations | **DEMO-PROVEN** |
-| Rescan, verify, and record audit | **DEMO-PROVEN** |
+## Failed control &rarr; investigate &rarr; choose fix &rarr; approve &rarr; change &rarr; rescan &rarr; evidence
 
-Real AWS execution remains deliberately disabled.
+- Every failed control starts a chain of human and operational work.
+- Fragmented steps delay the move from `NON_COMPLIANT` to verified resolution.
+- More accounts, resources, and controls make the same gap repeat more often.
 
-<!-- Speaker note: The POC proves the whole operating loop locally before requesting any cloud write authority. -->
+**Goal: shorten the gap without weakening governance.**
 
----
-
-# The POC is intentionally small
-
-One synthetic account. One synthetic bucket. Exactly two controls.
-
-| Required control | Modeled remediation |
-| --- | --- |
-| TLS-only S3 requests | Restrict non-TLS requests |
-| No public read access | Configure public-access block |
-
-The browser cannot select arbitrary buckets, controls, runbooks, parameters,
-or approval identities. The trusted server owns the exact plan.
-
-**KISS:** prove one reusable pattern before expanding the catalogue.
-
-<!-- Speaker note: These two controls are examples, not an attempt to model every S3 rule or build an enterprise compliance platform. -->
+<!-- Speaker note: A finding is only the start. Teams still need to understand it, select a safe fix, obtain approval, make the change, rescan, and retain evidence. -->
 
 ---
 
-# Proof 1: findings pause for approval
+# Why this matters now
 
-**DEMO-PROVEN:** both controls are `NON_COMPLIANT`; AgentGuard prepares one
-exact plan, performs no remediation, and waits for a person.
+- **Systemic misconfigurations persist** - CISA and NSA, 2023
+- **31% of breaches start with software vulnerabilities** - Verizon DBIR, 2026
 
-![Compliance Guard requires approval for the exact two-control plan](demo-compliance-proof/proposal.png)
+These sources establish urgency. They do not prove AgentGuard effectiveness,
+S3 compliance scale, or that AI caused these incidents.
 
-<!-- Speaker note: The system finds and recommends quickly, but a sensitive action cannot start merely because an agent requested it. -->
+**Inference:** reducing avoidable defensive delay is useful when remediation
+authority remains controlled.
 
----
-
-# Proof 2: approval permits the exact plan
-
-**DEMO-PROVEN:** one matching approval permits both modeled remediations. A
-rescan verifies both controls as `COMPLIANT`, and the audit is recorded.
-
-![Compliance Guard verifies both approved synthetic remediations](demo-compliance-proof/approval-valid.png)
-
-<!-- Speaker note: The visible mutation is local synthetic state. No AWS API or SSM Automation execution occurred. -->
+<!-- Speaker note: CISA and NSA, "NSA and CISA Red and Blue Teams Share Top Ten Cybersecurity Misconfigurations," October 5, 2023, https://www.cisa.gov/news-events/cybersecurity-advisories/aa23-278a. Verizon Business, "2026 Data Breach Investigations Report," May 18, 2026, https://www.verizon.com/business/resources/reports/dbir/. The sources support recurring misconfigurations and vulnerability exploitation as a leading entry point; they do not prove AgentGuard prevents incidents or that AI caused them. -->
 
 ---
 
-# Proof 3: the agent cannot bypass people
+# Proposed solution: governed agentic assistance
 
-**DEMO-PROVEN:** "fix every bucket now" is denied. Both controls remain
-`NON_COMPLIANT`; mutation is `NO`; audit is recorded.
+## Use AI for speed. Keep authority governed.
 
-![Compliance Guard denies an approval-bypass attempt](demo-compliance-proof/bypass-denied.png)
+- **Narrow tools:** the agent sees aliases and an allowlisted scope.
+- **Exact proposal:** the trusted server creates one typed remediation plan.
+- **Deterministic control:** policy returns `ALLOW`, `DENY`, or `APPROVAL REQUIRED`.
+- **Accountable action:** people approve sensitive remediation; the system
+  verifies and records the result.
 
-<!-- Speaker note: The negative path is essential. Agentic speed does not become agentic authority. -->
+The agent accelerates the work. **Policy constrains authority.**
 
----
-
-# What this POC proves
-
-| Capability | Honest status |
-| --- | --- |
-| Two-control browser journey | **DEMO-PROVEN** |
-| Exact mapping and one-time approval | **TEST + DEMO-PROVEN** |
-| Rescan, verification, and audit pattern | **SYNTHETIC DEMO-PROVEN** |
-| Real AWS execution and multi-account scale | **NOT PROVEN** |
-
-The POC does **not** promise 100 percent compliance.
-
-<!-- Speaker note: Evidence labels keep the story credible. Local proof supports the direction; production authority and scale require separate controlled phases. -->
+<!-- Speaker note: The proposed answer is not an AI with full cloud permissions. The agent recommends through narrow tools, deterministic policy constrains the action, and people retain accountability for sensitive approval. -->
 
 ---
 
-# Management takeaway
+# One simple operating loop
 
-## A reusable pattern for compliance at scale
+## Find &rarr; Explain &rarr; Recommend &rarr; Approve &rarr; Remediate &rarr; Verify
 
-- AI can accelerate scanning, explanation, and recommendations.
-- Deterministic policy can constrain targets and remediation choices.
-- People can retain approval for sensitive actions.
-- Rescan and audit evidence can make outcomes visible.
-- The same pattern can later extend to backup, logging, encryption, public
-  write, ACL, and other approved controls.
+AgentGuard accelerates investigation and recommendation while policy and
+human approval control sensitive action.
 
-**Next phase, separately approved:** one narrow real read-only compliance
-signal before any cloud remediation authority.
+**Current POC boundary**
 
-<!-- Speaker note: The value is a safe operating pattern. Expansion should happen one bounded control and one evidence gate at a time. -->
+- one synthetic S3 bucket;
+- two fixed compliance controls;
+- local modeled remediation only;
+- no live AWS execution.
+
+<!-- Speaker note: The POC intentionally models one bucket and two controls so the control boundary is clear before discussing scale. It proves the operating loop locally, not a production cloud platform. -->
+
+---
+
+# Proof 1: the exact proposal pauses
+
+**DEMO-PROVEN - local synthetic POC**
+
+- two controls: `NON_COMPLIANT`
+- decision: `APPROVAL REQUIRED`
+- reason: human approval required
+- mutation: `NO`
+
+![The exact two-control proposal pauses for approval](demo-compliance-proof/proposal-slide.png)
+
+<!-- Speaker note: The system finds two failed controls and prepares one exact remediation plan. Nothing changes yet: approval is required and mutation remains no. -->
+
+---
+
+# Proof 2: approved action is verified
+
+**DEMO-PROVEN - local synthetic POC; no AWS execution**
+
+- decision: `ALLOW / APPROVAL_VALID`
+- both controls: `COMPLIANT`
+- mutation: `YES`; verified: `YES`
+- audit: `RECORDED`
+
+![The approved local plan is verified and recorded](demo-compliance-proof/approval-valid-slide.png)
+
+<!-- Speaker note: A matching one-time approval permits only the exact modeled plan. Both controls rescan as compliant, verification succeeds, and audit is recorded in local synthetic state. -->
+
+---
+
+# Safety proof: approval cannot be bypassed
+
+**DEMO-PROVEN - local synthetic POC**
+
+- decision: `DENY`
+- reason: human approval required
+- both controls remain `NON_COMPLIANT`
+- mutation: `NO`; verified: `NO`
+
+![The attempted approval bypass is denied with zero mutation](demo-compliance-proof/bypass-denied-slide.png)
+
+**Agentic speed does not become agentic authority.**
+
+<!-- Speaker note: The negative path matters as much as the successful path. An attempted approval bypass is denied and the local control state does not change. -->
+
+---
+
+# Value and decision requested
+
+- reduce repetitive investigation and remediation coordination;
+- shorten time from finding to verified resolution;
+- improve consistency of approved remediation;
+- make rescan and evidence part of the normal workflow.
+
+## Approve the direction for the next bounded evaluation - not production deployment.
+
+Deferred: **technical requirements &rarr; design specification &rarr; controlled implementation planning**
+
+Live AWS, IAM, SSM Automation, multi-account scale, production deployment, and
+100 percent compliance remain **NOT PROVEN**.
+
+<!-- Speaker note: The request is approval to continue evaluating this governed direction, not approval for production deployment. Technical requirements and design specification come only after management accepts the direction. -->

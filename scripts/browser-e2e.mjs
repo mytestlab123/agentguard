@@ -42,7 +42,11 @@ const pageErrors = [];
 const requestFailures = [];
 const httpErrors = [];
 const externalRequests = [];
+const screenshotDetails = [];
 let browser;
+
+const fullViewport = { width: 1920, height: 1080 };
+const slideViewport = { width: 1200, height: 900 };
 
 function isLocalUrl(rawUrl) {
   const url = new URL(rawUrl);
@@ -52,6 +56,68 @@ function isLocalUrl(rawUrl) {
 async function assertText(locator, expected) {
   await locator.waitFor({ state: 'visible' });
   assert.equal((await locator.textContent())?.trim(), expected);
+}
+
+async function assertIncludes(locator, expected, label) {
+  await locator.waitFor({ state: 'visible' });
+  const actual = (await locator.textContent()) || '';
+  assert.ok(actual.includes(expected), `${label} is missing ${expected}`);
+}
+
+async function captureComplianceScreenshots(page, screenshotBase) {
+  await page.setViewportSize(fullViewport);
+  const fullName = `${screenshotBase}-full.png`;
+  await page.screenshot({
+    path: path.join(evidenceDir, fullName),
+    animations: 'disabled',
+  });
+
+  await page.setViewportSize(slideViewport);
+  const regions = [
+    page.locator('.message.user').last(),
+    page.getByRole('region', { name: 'S3 compliance findings' }),
+    page.getByRole('complementary', { name: 'AgentGuard decision' }),
+  ];
+  const boxes = [];
+  for (const region of regions) {
+    await region.waitFor({ state: 'visible' });
+    const box = await region.boundingBox();
+    assert.ok(box, 'presentation evidence region has no bounding box');
+    boxes.push(box);
+  }
+
+  const margin = 24;
+  const calculatedX1 = Math.max(0, Math.min(...boxes.map((box) => box.x)) - margin);
+  const x1 = calculatedX1 < 64 ? 0 : calculatedX1;
+  const y1 = Math.max(0, Math.min(...boxes.map((box) => box.y)) - margin);
+  const x2 = Math.min(
+    slideViewport.width,
+    Math.max(...boxes.map((box) => box.x + box.width)) + margin,
+  );
+  const y2 = Math.min(
+    slideViewport.height,
+    Math.max(...boxes.map((box) => box.y + box.height)) + margin,
+  );
+  const clip = {
+    x: Math.floor(x1),
+    y: Math.floor(y1),
+    width: Math.ceil(x2 - x1),
+    height: Math.ceil(y2 - y1),
+  };
+  assert.ok(clip.width >= 900 && clip.width <= slideViewport.width, 'invalid slide width');
+  assert.ok(clip.height >= 600 && clip.height <= 1200, 'invalid slide height');
+
+  const slideName = `${screenshotBase}-slide.png`;
+  await page.screenshot({
+    path: path.join(evidenceDir, slideName),
+    animations: 'disabled',
+    clip,
+  });
+  screenshotDetails.push(
+    { name: fullName, width: fullViewport.width, height: fullViewport.height, mode: 'full' },
+    { name: slideName, width: clip.width, height: clip.height, mode: 'focused' },
+  );
+  await page.setViewportSize(fullViewport);
 }
 
 async function clickAndAssert(page, spec) {
@@ -90,10 +156,27 @@ async function clickAndAssert(page, spec) {
 
   await assertText(page.locator('.decision-badge'), spec.badge);
   await assertText(page.locator('.reason-code'), spec.reason);
-  await page.screenshot({
-    path: path.join(evidenceDir, spec.screenshotName),
-    animations: 'disabled',
-  });
+  if (compliance) {
+    const findings = page.getByRole('region', { name: 'S3 compliance findings' });
+    await assertIncludes(findings, 'S3_BUCKET_SSL_REQUESTS_ONLY', 'compliance findings');
+    await assertIncludes(findings, 'S3_BUCKET_PUBLIC_READ_PROHIBITED', 'compliance findings');
+    for (const status of spec.findingStatuses) {
+      await assertIncludes(findings, status, 'compliance findings');
+    }
+    await assertIncludes(page.locator('.audit-strip'), `Mutation: ${spec.api.mutationPerformed ? 'YES' : 'NO'}`, 'audit strip');
+    await captureComplianceScreenshots(page, spec.screenshotBase);
+  } else {
+    await page.screenshot({
+      path: path.join(evidenceDir, spec.screenshotName),
+      animations: 'disabled',
+    });
+    screenshotDetails.push({
+      name: spec.screenshotName,
+      width: fullViewport.width,
+      height: fullViewport.height,
+      mode: 'full',
+    });
+  }
 }
 
 try {
@@ -104,7 +187,7 @@ try {
   });
 
   const context = await browser.newContext({
-    viewport: { width: 1920, height: 1080 },
+    viewport: fullViewport,
   });
   const page = await context.newPage();
 
@@ -140,6 +223,7 @@ try {
     reason: 'HUMAN_APPROVAL_REQUIRED',
     jsonName: 'proposal.json',
     screenshotName: 'proposal.png',
+    screenshotBase: 'proposal',
     api: {
       decision: 'APPROVAL_REQUIRED',
       reason: 'HUMAN_APPROVAL_REQUIRED',
@@ -159,6 +243,7 @@ try {
     reason: 'APPROVAL_VALID',
     jsonName: 'approval-valid.json',
     screenshotName: 'approval-valid.png',
+    screenshotBase: 'approval-valid',
     api: {
       decision: 'ALLOW',
       reason: 'APPROVAL_VALID',
@@ -188,6 +273,7 @@ try {
     reason: 'HUMAN_APPROVAL_REQUIRED',
     jsonName: 'bypass.json',
     screenshotName: 'bypass-denied.png',
+    screenshotBase: 'bypass-denied',
     api: {
       decision: 'DENY',
       reason: 'HUMAN_APPROVAL_REQUIRED',
@@ -221,7 +307,8 @@ try {
     requestFailures,
     httpErrors,
     externalRequests,
-    screenshots: ['proposal.png', 'approval-valid.png', 'bypass-denied.png'],
+    screenshots: screenshotDetails.map((screenshot) => screenshot.name),
+    screenshotDetails,
   };
 
   await fs.writeFile(
