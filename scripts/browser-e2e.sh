@@ -229,19 +229,36 @@ jq -e --arg story "$demo_story" '
   (.pageErrors | length) == 0 and
   (.requestFailures | length) == 0 and
   (.externalRequests | length) == 0 and
-  (.screenshots | length) == 3
+  (.screenshots | length) == (if $story == "compliance" then 6 else 3 end) and
+  (.screenshotDetails | length) == (if $story == "compliance" then 6 else 3 end)
 ' "$run_dir/result.json" >/dev/null
 
-for screenshot in proposal approval-valid bypass-denied; do
-  [[ -s "$run_dir/$screenshot.png" ]] || fail "missing screenshot: $screenshot.png"
-done
-
-cmp -s "$run_dir/proposal.png" "$run_dir/bypass-denied.png" && \
-  fail "proposal and bypass screenshots are identical"
-cmp -s "$run_dir/proposal.png" "$run_dir/approval-valid.png" && \
-  fail "proposal and approval screenshots are identical"
-cmp -s "$run_dir/approval-valid.png" "$run_dir/bypass-denied.png" && \
-  fail "approval and bypass screenshots are identical"
+if [[ "$demo_story" == "compliance" ]]; then
+  for screenshot in \
+    proposal-full proposal-slide \
+    approval-valid-full approval-valid-slide \
+    bypass-denied-full bypass-denied-slide; do
+    [[ -s "$run_dir/$screenshot.png" ]] || fail "missing screenshot: $screenshot.png"
+  done
+  for suffix in full slide; do
+    cmp -s "$run_dir/proposal-$suffix.png" "$run_dir/bypass-denied-$suffix.png" && \
+      fail "proposal and bypass $suffix screenshots are identical"
+    cmp -s "$run_dir/proposal-$suffix.png" "$run_dir/approval-valid-$suffix.png" && \
+      fail "proposal and approval $suffix screenshots are identical"
+    cmp -s "$run_dir/approval-valid-$suffix.png" "$run_dir/bypass-denied-$suffix.png" && \
+      fail "approval and bypass $suffix screenshots are identical"
+  done
+else
+  for screenshot in proposal approval-valid bypass-denied; do
+    [[ -s "$run_dir/$screenshot.png" ]] || fail "missing screenshot: $screenshot.png"
+  done
+  cmp -s "$run_dir/proposal.png" "$run_dir/bypass-denied.png" && \
+    fail "proposal and bypass screenshots are identical"
+  cmp -s "$run_dir/proposal.png" "$run_dir/approval-valid.png" && \
+    fail "proposal and approval screenshots are identical"
+  cmp -s "$run_dir/approval-valid.png" "$run_dir/bypass-denied.png" && \
+    fail "approval and bypass screenshots are identical"
+fi
 
 stop_services
 wait_for_port_release "$api_port"
